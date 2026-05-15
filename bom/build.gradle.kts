@@ -73,3 +73,5 @@ publishing {
         }
     }
 }
+
+apply(from = "../gradle/publishing.gradle")

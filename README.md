@@ -127,22 +127,3 @@ Gradle (Kotlin DSL), use the wrapper:
 The `Test` task always sets `FLYWAY_NATIVE_CONNECTORS=true`. Don't run JUnit directly from an IDE without that env var, or Flyway will silently fall back to JDBC and tests will fail confusingly.
 
 To build against a different Flyway version, edit the `flyway` entry in `gradle/libs.versions.toml`.
-
-## Project layout
-
-```
-src/main/kotlin/com/github/rbleuse/flywaync/
-  FlywayNcAutoConfiguration.kt      # the autoconfig entry point
-  FlywayNcProperties.kt             # @ConfigurationProperties for spring.flyway-nc.*
-  FlywayNcMigrationInitializer.kt   # triggers migrate() during bean init
-  FlywayNcMigrationStrategy.kt      # extension point: override migrate() behavior
-  FlywayConfigurationCustomizer.kt  # extension point: customize the Flyway builder
-src/main/resources/META-INF/spring/
-  org.springframework.boot.autoconfigure.AutoConfiguration.imports
-bom/
-  build.gradle.kts                  # the dependencies BOM
-```
-
-## License
-
-See repository for license details.

@@ -1,4 +1,4 @@
-package com.github.rbleuse.flywaync
+﻿package io.github.rbleuse.flywaync
 
 import org.flywaydb.core.Flyway
 import org.springframework.beans.factory.InitializingBean

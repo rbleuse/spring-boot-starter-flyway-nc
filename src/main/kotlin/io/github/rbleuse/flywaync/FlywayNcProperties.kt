@@ -1,4 +1,4 @@
-package com.github.rbleuse.flywaync
+﻿package io.github.rbleuse.flywaync
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 

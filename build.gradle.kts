@@ -7,7 +7,7 @@ plugins {
     `maven-publish`
 }
 
-group = "com.github.rbleuse"
+group = "io.github.rbleuse"
 version = "1.0.0-SNAPSHOT"
 description = "Spring Boot starter for Flyway native (non-JDBC) connectors"
 

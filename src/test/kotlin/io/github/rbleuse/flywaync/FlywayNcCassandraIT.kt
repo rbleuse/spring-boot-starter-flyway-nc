@@ -1,4 +1,4 @@
-package com.github.rbleuse.flywaync
+﻿package io.github.rbleuse.flywaync
 
 import com.datastax.oss.driver.api.core.CqlSession
 import io.kotest.matchers.collections.shouldContain

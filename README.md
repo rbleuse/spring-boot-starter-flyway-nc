@@ -14,8 +14,8 @@ Spring Boot's built-in `spring-boot-starter-flyway` is JDBC-only (it requires a 
 
 This project publishes two artifacts:
 
-- `com.github.rbleuse:spring-boot-starter-flyway-nc` — the starter itself
-- `com.github.rbleuse:spring-boot-starter-flyway-nc-dependencies` — a BOM pinning every Flyway NC module to a single, override-able version
+- `io.github.rbleuse:spring-boot-starter-flyway-nc` — the starter itself
+- `io.github.rbleuse:spring-boot-starter-flyway-nc-dependencies` — a BOM pinning every Flyway NC module to a single, override-able version
 
 ### With the Spring Boot Gradle plugin (recommended)
 
@@ -28,12 +28,12 @@ extra["flyway.version"] = "12.6.0" // optional override; defaults to the BOM's p
 
 dependencyManagement {
     imports {
-        mavenBom("com.github.rbleuse:spring-boot-starter-flyway-nc-dependencies:<version>")
+        mavenBom("io.github.rbleuse:spring-boot-starter-flyway-nc-dependencies:<version>")
     }
 }
 
 dependencies {
-    implementation("com.github.rbleuse:spring-boot-starter-flyway-nc")
+    implementation("io.github.rbleuse:spring-boot-starter-flyway-nc")
     runtimeOnly("org.flywaydb:flyway-database-nc-cassandra") // pick the DB module you need
 }
 ```

@@ -1,4 +1,4 @@
-package com.github.rbleuse.flywaync
+﻿package io.github.rbleuse.flywaync
 
 import io.kotest.matchers.shouldBe
 import org.flywaydb.core.Flyway

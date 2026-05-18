@@ -1,8 +1,10 @@
 ﻿package io.github.rbleuse.flywaync
 
 import org.springframework.boot.context.properties.ConfigurationProperties
+import kotlin.jvm.JvmRecord
 
 @ConfigurationProperties("spring.flyway-nc")
+@JvmRecord
 data class FlywayNcProperties(
     val enabled: Boolean = true,
     val url: String,

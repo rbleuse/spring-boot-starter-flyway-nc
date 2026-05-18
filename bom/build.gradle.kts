@@ -32,7 +32,8 @@ val flywayModules = listOf(
 
 dependencies {
     constraints {
-        api("${rootProject.group}:${rootProject.name}:${rootProject.version}")
+        api("${rootProject.group}:spring-boot-starter-flyway-nc:${rootProject.version}")
+        api("${rootProject.group}:spring-boot-starter-flyway-nc-cassandra:${rootProject.version}")
 
         flywayModules.forEach { api("org.flywaydb:$it:$flywayVersion") }
     }

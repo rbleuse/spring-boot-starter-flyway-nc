@@ -12,9 +12,10 @@ Spring Boot's built-in `spring-boot-starter-flyway` is JDBC-only (it requires a 
 
 ## Installation
 
-This project publishes two artifacts:
+This project publishes three artifacts:
 
-- `io.github.rbleuse:spring-boot-starter-flyway-nc` — the starter itself
+- `io.github.rbleuse:spring-boot-starter-flyway-nc` — the generic starter
+- `io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra` — Cassandra support for the generic starter, including the Flyway Cassandra NC module and Docker Compose service connection details
 - `io.github.rbleuse:spring-boot-starter-flyway-nc-dependencies` — a BOM pinning every Flyway NC module to a single, override-able version
 
 ### With the Spring Boot Gradle plugin (recommended)
@@ -34,7 +35,15 @@ dependencyManagement {
 
 dependencies {
     implementation("io.github.rbleuse:spring-boot-starter-flyway-nc")
-    runtimeOnly("org.flywaydb:flyway-database-nc-cassandra") // pick the DB module you need
+    runtimeOnly("org.flywaydb:flyway-database-nc-<database>") // pick the DB module you need
+}
+```
+
+For Cassandra, use the Cassandra-specific starter instead. It pulls in the generic starter and the Cassandra Flyway NC database module:
+
+```kotlin
+dependencies {
+    implementation("io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra")
 }
 ```
 
@@ -78,7 +87,7 @@ spring:
 
 ### Docker Compose service connections
 
-When `org.springframework.boot:spring-boot-docker-compose` is on the classpath, Cassandra compose services are detected the same way Spring Boot detects them for Spring Data Cassandra. The starter contributes a `FlywayNcConnectionDetails` bean for `cassandra` images and uses it to configure Flyway's NC URL:
+When both `io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra` and `org.springframework.boot:spring-boot-docker-compose` are on the classpath, Cassandra compose services are detected the same way Spring Boot detects them for Spring Data Cassandra. The Cassandra starter contributes a `FlywayNcConnectionDetails` bean for `cassandra` images and uses it to configure Flyway's NC URL:
 
 ```yaml
 services:

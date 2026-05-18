@@ -46,9 +46,11 @@ dependencies {
     runtimeOnly(libs.flyway.nc.scanners)
 
     compileOnly(libs.springBoot.autoconfigure)
+    compileOnly(libs.springBoot.docker.compose)
     implementation(libs.kotlin.reflect)
 
     testImplementation(platform(libs.springBoot.dependencies))
+    testImplementation(libs.springBoot.docker.compose)
     testImplementation(libs.springBoot.starter.test)
     testImplementation(libs.springBoot.testcontainers)
     testImplementation(libs.testcontainers.cassandra)

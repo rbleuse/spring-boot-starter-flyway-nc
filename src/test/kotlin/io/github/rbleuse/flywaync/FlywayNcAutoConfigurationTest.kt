@@ -45,7 +45,31 @@ class FlywayNcAutoConfigurationTest {
         contextRunner
             .withBean(Flyway::class.java, { userFlyway })
             .run { context ->
-                context.getBean(Flyway::class.java) shouldBe userFlyway
+                context.getBean<Flyway>() shouldBe userFlyway
+            }
+    }
+
+    @Test
+    fun `uses connection details when url property is not configured`() {
+        ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
+            .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
+            .withBean(
+                FlywayNcConnectionDetails::class.java,
+                {
+                    FlywayNcConnectionDetails(
+                        url = "cassandra://compose-host:19042/compose_keyspace?localdatacenter=compose-dc",
+                        user = "compose-user",
+                        password = "compose-password",
+                    )
+                },
+            )
+            .run { context ->
+                val configuration = context.getBean<Flyway>().configuration
+                configuration.url shouldBe
+                    "cassandra://compose-host:19042/compose_keyspace?localdatacenter=compose-dc"
+                configuration.user shouldBe "compose-user"
+                configuration.password shouldBe "compose-password"
             }
     }
 

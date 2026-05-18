@@ -17,12 +17,22 @@ import org.springframework.context.annotation.Bean
 class FlywayNcAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
+    fun flywayNcConnectionDetails(props: FlywayNcProperties): FlywayNcConnectionDetails =
+        FlywayNcConnectionDetails(
+            url = requireNotNull(props.url) { "spring.flyway-nc.url must be configured" },
+            user = props.user,
+            password = props.password,
+        )
+
+    @Bean
+    @ConditionalOnMissingBean
     fun flyway(
         props: FlywayNcProperties,
+        connectionDetails: FlywayNcConnectionDetails,
         customizers: ObjectProvider<FlywayConfigurationCustomizer>,
     ): Flyway {
         val config = Flyway.configure()
-            .dataSource(props.url, props.user, props.password)
+            .dataSource(connectionDetails.url, connectionDetails.user, connectionDetails.password)
             .locations(*props.locations.toTypedArray())
         props.migrationSuffixes?.let { config.sqlMigrationSuffixes(*it.toTypedArray()) }
         props.defaultSchema?.let { config.defaultSchema(it) }

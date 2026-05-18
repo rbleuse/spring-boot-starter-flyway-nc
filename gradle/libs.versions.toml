@@ -10,6 +10,7 @@ flyway-nc-scanners = { module = "org.flywaydb:flyway-nc-scanners", version.ref =
 
 springBoot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
 springBoot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "springBoot" }
+springBoot-docker-compose = { module = "org.springframework.boot:spring-boot-docker-compose", version.ref = "springBoot" }
 springBoot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 springBoot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }
 

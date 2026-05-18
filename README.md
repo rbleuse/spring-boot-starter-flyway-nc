@@ -57,7 +57,7 @@ All properties are under the `spring.flyway-nc` prefix:
 | Property | Default | Description |
 |---|---|---|
 | `enabled` | `true` | Set to `false` to disable autoconfig entirely. |
-| `url` | — (required) | The Flyway NC datasource URL (e.g. a Cassandra contact point URL). |
+| `url` | — | The Flyway NC datasource URL (e.g. a Cassandra contact point URL). Required unless a `FlywayNcConnectionDetails` bean is provided, such as by Docker Compose service connections. |
 | `user` | `null` | Optional username. |
 | `password` | `null` | Optional password. |
 | `locations` | `classpath:db/migration` | Migration locations, Flyway-style. |
@@ -69,19 +69,39 @@ Example `application.yml`:
 ```yaml
 spring:
   flyway-nc:
-    url: cassandra://localhost:9042/?datacenter=datacenter1
+    url: cassandra://localhost:9042/?localdatacenter=datacenter1
     default-schema: my_keyspace
     migration-suffixes: [".cql"]
     locations:
       - classpath:db/migration
 ```
 
+### Docker Compose service connections
+
+When `org.springframework.boot:spring-boot-docker-compose` is on the classpath, Cassandra compose services are detected the same way Spring Boot detects them for Spring Data Cassandra. The starter contributes a `FlywayNcConnectionDetails` bean for `cassandra` images and uses it to configure Flyway's NC URL:
+
+```yaml
+services:
+  cassandra:
+    image: cassandra:5.0
+    ports:
+      - "9042"
+    environment:
+      CASSANDRA_DC: datacenter1
+      CASSANDRA_KEYSPACE: my_keyspace
+      CASSANDRA_USER: cassandra
+      CASSANDRA_PASSWORD: cassandra
+```
+
+With that compose service, you can omit `spring.flyway-nc.url`, `spring.flyway-nc.user`, and `spring.flyway-nc.password`. The Docker Compose service connection supplies the mapped host and port, `CASSANDRA_DC` or `CASSANDRA_DATACENTER`, `CASSANDRA_KEYSPACE`, and credentials from `CASSANDRA_USER` or `CASSANDRA_USERNAME` plus `CASSANDRA_PASSWORD`.
+
 ## How it works
 
-`FlywayNcAutoConfiguration` is activated when `Flyway` is on the classpath and `spring.flyway-nc.enabled` is not `false`. It wires two beans, both gated with `@ConditionalOnMissingBean`:
+`FlywayNcAutoConfiguration` is activated when `Flyway` is on the classpath and `spring.flyway-nc.enabled` is not `false`. It wires three beans, all gated with `@ConditionalOnMissingBean`:
 
-1. **`Flyway`** — built from `FlywayNcProperties`. All discovered `FlywayConfigurationCustomizer` beans run against the `FluentConfiguration` builder before `.load()`, in `@Order` order.
-2. **`FlywayNcMigrationInitializer`** — an `InitializingBean` that calls `flyway.migrate()` (or a user-supplied `FlywayNcMigrationStrategy`) in `afterPropertiesSet()`.
+1. **`FlywayNcConnectionDetails`** — built from `spring.flyway-nc.url`, `user`, and `password` when no service connection has provided one.
+2. **`Flyway`** — built from `FlywayNcConnectionDetails` plus the remaining `FlywayNcProperties`. All discovered `FlywayConfigurationCustomizer` beans run against the `FluentConfiguration` builder before `.load()`, in `@Order` order.
+3. **`FlywayNcMigrationInitializer`** — an `InitializingBean` that calls `flyway.migrate()` (or a user-supplied `FlywayNcMigrationStrategy`) in `afterPropertiesSet()`.
 
 ## Extension points
 

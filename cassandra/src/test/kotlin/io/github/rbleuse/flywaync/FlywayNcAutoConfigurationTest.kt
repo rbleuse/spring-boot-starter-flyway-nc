@@ -57,11 +57,11 @@ class FlywayNcAutoConfigurationTest {
             .withBean(
                 FlywayNcConnectionDetails::class.java,
                 {
-                    FlywayNcConnectionDetailsProperties(
-                        url = "cassandra://compose-host:19042/compose_keyspace?localdatacenter=compose-dc",
-                        user = "compose-user",
-                        password = "compose-password",
-                    )
+                    object : FlywayNcConnectionDetails {
+                        override val url: String = "cassandra://compose-host:19042/compose_keyspace?localdatacenter=compose-dc"
+                        override val user: String = "compose-user"
+                        override val password: String = "compose-password"
+                    }
                 },
             )
             .run { context ->

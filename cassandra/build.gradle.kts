@@ -36,8 +36,11 @@ tasks.withType<JavaCompile>().configureEach {
 dependencies {
     api(project(":spring-boot-starter-flyway-nc"))
 
+    compileOnly(platform(libs.springBoot.dependencies))
     compileOnly(libs.springBoot.autoconfigure)
     compileOnly(libs.springBoot.docker.compose)
+    compileOnly(libs.springBoot.testcontainers)
+    compileOnly(libs.testcontainers.cassandra)
     runtimeOnly(libs.flyway.database.nc.cassandra)
 
     testImplementation(platform(libs.springBoot.dependencies))

@@ -8,6 +8,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
+import java.net.URI
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 @AutoConfiguration
 @ConditionalOnClass(Flyway::class)
@@ -17,11 +20,11 @@ class FlywayNcAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     fun flywayNcConnectionDetails(props: FlywayNcProperties): FlywayNcConnectionDetails =
-        FlywayNcConnectionDetails(
-            url = requireNotNull(props.url) { "spring.flyway-nc.url must be configured" },
-            user = props.user,
-            password = props.password,
-        )
+        object : FlywayNcConnectionDetails {
+            override val url: String = requireNotNull(props.url) { "spring.flyway-nc.url must be configured" }
+            override val user: String? = props.user
+            override val password: String? = props.password
+        }
 
     @Bean
     @ConditionalOnMissingBean
@@ -30,8 +33,9 @@ class FlywayNcAutoConfiguration {
         connectionDetails: FlywayNcConnectionDetails,
         customizers: ObjectProvider<FlywayConfigurationCustomizer>,
     ): Flyway {
+        val url = connectionDetails.url.withSchemaIfMissing(props.defaultSchema)
         val config = Flyway.configure()
-            .dataSource(connectionDetails.url, connectionDetails.user, connectionDetails.password)
+            .dataSource(url, connectionDetails.user, connectionDetails.password)
             .locations(*props.locations.toTypedArray())
         props.migrationSuffixes?.let { config.sqlMigrationSuffixes(*it.toTypedArray()) }
         props.defaultSchema?.let { config.defaultSchema(it) }
@@ -46,4 +50,15 @@ class FlywayNcAutoConfiguration {
         strategy: ObjectProvider<FlywayNcMigrationStrategy>,
     ): FlywayNcMigrationInitializer =
         FlywayNcMigrationInitializer(flyway, strategy.ifAvailable)
+
+    private fun String.withSchemaIfMissing(schema: String?): String {
+        if (schema.isNullOrBlank()) return this
+        val uri = runCatching { URI(this) }.getOrNull() ?: return this
+        if (!uri.rawPath.isNullOrEmpty() && uri.rawPath != "/") return this
+        val encoded = URLEncoder.encode(schema, StandardCharsets.UTF_8)
+        val queryIdx = this.indexOf('?')
+        val base = (if (queryIdx >= 0) this.substring(0, queryIdx) else this).trimEnd('/')
+        val query = if (queryIdx >= 0) this.substring(queryIdx) else ""
+        return "$base/$encoded$query"
+    }
 }

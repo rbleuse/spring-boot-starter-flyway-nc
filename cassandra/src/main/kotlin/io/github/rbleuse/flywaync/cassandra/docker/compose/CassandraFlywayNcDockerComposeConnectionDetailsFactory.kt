@@ -7,17 +7,17 @@ import org.springframework.boot.docker.compose.service.connection.DockerComposeC
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-class CassandraFlywayNcDockerComposeConnectionDetailsFactory :
+internal class CassandraFlywayNcDockerComposeConnectionDetailsFactory :
     DockerComposeConnectionDetailsFactory<FlywayNcConnectionDetails>("cassandra") {
 
     override fun getDockerComposeConnectionDetails(source: DockerComposeConnectionSource): FlywayNcConnectionDetails {
         val service = source.runningService
         val environment = CassandraEnvironment(service.env())
-        return FlywayNcConnectionDetails(
-            url = service.toCassandraUrl(environment),
-            user = environment.user,
-            password = environment.password,
-        )
+        return object : FlywayNcConnectionDetails {
+            override val url: String = service.toCassandraUrl(environment)
+            override val user: String? = environment.user
+            override val password: String? = environment.password
+        }
     }
 
     private fun RunningService.toCassandraUrl(environment: CassandraEnvironment): String =

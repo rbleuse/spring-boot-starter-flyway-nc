@@ -104,6 +104,18 @@ services:
 
 With that compose service, you can omit `spring.flyway-nc.url`, `spring.flyway-nc.user`, and `spring.flyway-nc.password`. The Docker Compose service connection supplies the mapped host and port, `CASSANDRA_DC` or `CASSANDRA_DATACENTER`, `CASSANDRA_KEYSPACE`, and credentials from `CASSANDRA_USER` or `CASSANDRA_USERNAME` plus `CASSANDRA_PASSWORD`.
 
+### Testcontainers service connections
+
+When `io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra` and `org.springframework.boot:spring-boot-testcontainers` are on the test classpath, a `CassandraContainer` annotated with `@ServiceConnection` supplies `spring.flyway-nc` connection details automatically:
+
+```kotlin
+@Container
+@ServiceConnection
+val cassandra = CassandraContainer(DockerImageName.parse("cassandra:5.0"))
+```
+
+Configure `spring.flyway-nc.default-schema` when Flyway should migrate a specific keyspace; the Cassandra container supplies host, port, local datacenter, username, and password.
+
 ## How it works
 
 `FlywayNcAutoConfiguration` is activated when `Flyway` is on the classpath and `spring.flyway-nc.enabled` is not `false`. It wires three beans, all gated with `@ConditionalOnMissingBean`:

@@ -7,47 +7,31 @@ import org.junit.jupiter.api.Test
 import org.springframework.boot.SpringBootConfiguration
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.boot.test.util.TestPropertyValues
-import org.springframework.context.ApplicationContextInitializer
-import org.springframework.context.ConfigurableApplicationContext
-import org.springframework.test.context.ContextConfiguration
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection
 import org.testcontainers.cassandra.CassandraContainer
-import org.testcontainers.junit.jupiter.Container
-import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 import java.net.InetSocketAddress
 
-@Testcontainers
+@SpringBootTest(
+    properties = [
+        "spring.flyway-nc.default-schema=flyway_nc_it",
+        "spring.flyway-nc.migration-suffixes[0]=.cql",
+    ],
+)
 @SpringBootConfiguration
 @EnableAutoConfiguration
-@SpringBootTest
-@ContextConfiguration(initializers = [FlywayNcCassandraIT.PropertyInitializer::class])
 class FlywayNcCassandraIT {
-
     companion object {
         private const val KEYSPACE = "flyway_nc_it"
 
-        @Container
-        @JvmStatic
+        @ServiceConnection
         val cassandra: CassandraContainer = CassandraContainer(
             DockerImageName.parse("cassandra:5.0")
         ).withInitScript("cassandra-init.cql")
     }
 
-    class PropertyInitializer : ApplicationContextInitializer<ConfigurableApplicationContext> {
-        override fun initialize(applicationContext: ConfigurableApplicationContext) {
-            val host = cassandra.contactPoint.hostName
-            val port = cassandra.contactPoint.port
-            val dc = cassandra.localDatacenter
-            TestPropertyValues.of(
-                "spring.flyway-nc.url=cassandra://$host:$port/$KEYSPACE?localdatacenter=$dc",
-                "spring.flyway-nc.migration-suffixes[0]=.cql",
-            ).applyTo(applicationContext.environment)
-        }
-    }
-
     @Test
-    fun `migration runs against a real Cassandra and creates the table plus history row`() {
+    fun `migration runs when keyspace is embedded in the URL and default-schema is unset`() {
         val host = cassandra.contactPoint.hostName
         val port = cassandra.contactPoint.port
         val dc = cassandra.localDatacenter

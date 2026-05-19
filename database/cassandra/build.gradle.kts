@@ -9,7 +9,7 @@ plugins {
 
 description = "Cassandra support for the Spring Boot Flyway native connectors starter"
 
-apply(from = "../gradle/publishing.gradle")
+apply(from = "../../gradle/publishing.gradle")
 
 java {
     toolchain {

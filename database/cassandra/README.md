@@ -1,6 +1,6 @@
 # spring-boot-starter-flyway-nc-cassandra
 
-Cassandra support for [`spring-boot-starter-flyway-nc`](../README.md) — Flyway's Native Connectors path applied to Apache Cassandra via the [`flyway-database-nc-cassandra`](https://documentation.red-gate.com/flyway/flyway-concepts/database-objects/database-native-connectors) module.
+Cassandra support for [`spring-boot-starter-flyway-nc`](../../README.md) — Flyway's Native Connectors path applied to Apache Cassandra via the [`flyway-database-nc-cassandra`](https://documentation.red-gate.com/flyway/flyway-concepts/database-objects/database-native-connectors) module.
 
 This starter:
 
@@ -16,11 +16,11 @@ dependencies {
 }
 ```
 
-See the [root README](../README.md#installation) for the recommended setup with the Spring Boot Gradle plugin and the `spring-boot-starter-flyway-nc-dependencies` BOM, plus the mandatory `FLYWAY_NATIVE_CONNECTORS=true` environment variable.
+See the [root README](../../README.md#installation) for the recommended setup with the Spring Boot Gradle plugin and the `spring-boot-starter-flyway-nc-dependencies` BOM, plus the mandatory `FLYWAY_NATIVE_CONNECTORS=true` environment variable.
 
 ## Configuration
 
-All `spring.flyway-nc.*` properties from the generic starter apply — see the [root README](../README.md#configuration) for the full list. A minimal Cassandra configuration looks like:
+All `spring.flyway-nc.*` properties from the generic starter apply — see the [root README](../../README.md#configuration) for the full list. A minimal Cassandra configuration looks like:
 
 ```yaml
 spring:
@@ -38,7 +38,7 @@ The Cassandra Flyway NC URL looks like:
 cassandra://<host>:<port>[/<keyspace>]?localdatacenter=<dc>[&...]
 ```
 
-- The path segment, if present, is the keyspace. Per the [URL schema handling rules](../README.md#url-schema-handling), a path in the URL wins over `spring.flyway-nc.default-schema`.
+- The path segment, if present, is the keyspace. Per the [URL schema handling rules](../../README.md#url-schema-handling), a path in the URL wins over `spring.flyway-nc.default-schema`.
 - `localdatacenter` is required by the Cassandra driver.
 
 ### Docker Compose service connections
@@ -81,7 +81,7 @@ The factory derives the URL from the container's `contactPoint` and `localDatace
 
 ## Customizing migration startup
 
-If you need to bootstrap a keyspace before Flyway runs (for example, because your application creates it dynamically rather than via Docker / Testcontainers init scripts), use a [`FlywayConfigurationCustomizer`](../README.md#flywayconfigurationcustomizer) that takes the bootstrap bean as a constructor parameter — Spring will order the customizer behind it:
+If you need to bootstrap a keyspace before Flyway runs (for example, because your application creates it dynamically rather than via Docker / Testcontainers init scripts), use a [`FlywayConfigurationCustomizer`](../../README.md#flywayconfigurationcustomizer) that takes the bootstrap bean as a constructor parameter — Spring will order the customizer behind it:
 
 ```kotlin
 @Bean
@@ -96,7 +96,7 @@ fun keyspaceBootstrap(session: CqlSession) = FlywayConfigurationCustomizer { con
 }
 ```
 
-To skip migration entirely in tests, or to run `repair()` first, supply a [`FlywayNcMigrationStrategy`](../README.md#flywayncmigrationstrategy) bean.
+To skip migration entirely in tests, or to run `repair()` first, supply a [`FlywayNcMigrationStrategy`](../../README.md#flywayncmigrationstrategy) bean.
 
 ## Writing migrations
 

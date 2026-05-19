@@ -15,7 +15,10 @@ springBoot-starter-test = { module = "org.springframework.boot:spring-boot-start
 springBoot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }
 
 testcontainers-cassandra = { module = "org.testcontainers:testcontainers-cassandra" }
+testcontainers-mongodb = { module = "org.testcontainers:testcontainers-mongodb" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }
+
+mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync" }
 
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 
@@ -24,3 +27,4 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 
 # Database dependencies
 flyway-database-nc-cassandra = { module = "org.flywaydb:flyway-database-nc-cassandra", version.ref = "flyway" }
+flyway-database-nc-mongodb = { module = "org.flywaydb:flyway-database-nc-mongodb", version.ref = "flyway" }

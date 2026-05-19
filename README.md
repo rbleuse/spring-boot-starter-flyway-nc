@@ -1,6 +1,6 @@
 # spring-boot-starter-flyway-nc
 
-A Spring Boot auto-configuration starter for Flyway's **Native Connectors** (NC) path — Flyway's non-JDBC engine introduced in Flyway 11/12 for databases like Cassandra.
+A Spring Boot auto-configuration starter for Flyway's **Native Connectors** (NC) path — Flyway's non-JDBC engine introduced in Flyway 11/12 for databases like Cassandra and MongoDB.
 
 Spring Boot's built-in `spring-boot-starter-flyway` is JDBC-only (it requires a `DataSource` bean), so this starter intentionally **does not depend on it** and reimplements the analogous initializer/strategy/customizer beans against Flyway's NC API.
 
@@ -12,12 +12,13 @@ Spring Boot's built-in `spring-boot-starter-flyway` is JDBC-only (it requires a 
 
 ## Modules
 
-This build publishes three artifacts:
+This build publishes four artifacts:
 
 | Coordinate | Purpose |
 |---|---|
 | `io.github.rbleuse:spring-boot-starter-flyway-nc` | The generic starter — autoconfig, properties, extension points. |
-| `io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra` | Cassandra support — see [the Cassandra module README](cassandra/README.md). |
+| `io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra` | Cassandra support — see [the Cassandra module README](database/cassandra/README.md). |
+| `io.github.rbleuse:spring-boot-starter-flyway-nc-mongodb` | MongoDB support — see [the MongoDB module README](database/mongodb/README.md). |
 | `io.github.rbleuse:spring-boot-starter-flyway-nc-dependencies` | A `java-platform` BOM pinning every Flyway NC module to a single, override-able version. |
 
 ## Installation
@@ -45,7 +46,8 @@ dependencies {
 
 For database-specific starters (which bundle the matching `flyway-database-nc-*` module and service-connection factories), see the per-database READMEs:
 
-- [Cassandra](cassandra/README.md)
+- [Cassandra](database/cassandra/README.md)
+- [MongoDB](database/mongodb/README.md)
 
 **How resolution works:** the starter declares `flyway-verb-migrate` and `flyway-nc-scanners` as `runtimeOnly`; the DB module transitively brings `flyway-core` and `flyway-nc-core`. The BOM pins every Flyway NC module to `${flyway.version}`, which `io.spring.dependency-management` lets you override via `extra["flyway.version"]` — the same mechanism Spring Boot uses for its own managed dependencies.
 
@@ -84,7 +86,7 @@ spring:
       - classpath:db/migration
 ```
 
-URL formats and database-specific options are documented in the per-database READMEs (e.g. [Cassandra](cassandra/README.md#cassandra-url-format)).
+URL formats and database-specific options are documented in the per-database READMEs ([Cassandra](database/cassandra/README.md#cassandra-url-format), [MongoDB](database/mongodb/README.md#mongodb-url-format)).
 
 ### URL schema handling
 
@@ -95,7 +97,7 @@ The `url` and `default-schema` properties interact as follows:
 
 ### Service connections
 
-Database-specific starters can contribute `FlywayNcConnectionDetails` beans via Spring Boot's standard service-connection mechanism (Docker Compose, Testcontainers). When such a factory is on the classpath, you can omit `spring.flyway-nc.url`, `user`, and `password` entirely. See the per-database README — [Cassandra](cassandra/README.md#docker-compose-service-connections) — for examples.
+Database-specific starters can contribute `FlywayNcConnectionDetails` beans via Spring Boot's standard service-connection mechanism (Docker Compose, Testcontainers). When such a factory is on the classpath, you can omit `spring.flyway-nc.url`, `user`, and `password` entirely. See the per-database READMEs — [Cassandra](database/cassandra/README.md#docker-compose-service-connections), [MongoDB](database/mongodb/README.md#docker-compose-service-connections) — for examples.
 
 ## How it works
 
@@ -136,11 +138,11 @@ fun schemaBootstrap(client: SomeClient) = FlywayConfigurationCustomizer { config
 }
 ```
 
-For a worked Cassandra example, see [the Cassandra module README](cassandra/README.md#customizing-migration-startup).
+For a worked Cassandra example, see [the Cassandra module README](database/cassandra/README.md#customizing-migration-startup).
 
 ## Limitations
 
-- **Database coverage is currently Cassandra only.** The BOM and the dedicated database starter (`spring-boot-starter-flyway-nc-cassandra`) only ship Cassandra wiring today. Other Flyway NC database modules can still be used with the generic starter by adding the appropriate `flyway-database-nc-*` dependency yourself, but there is no equivalent service-connection support for them.
+- **Database coverage is currently Cassandra and MongoDB.** The BOM and the dedicated database starters (`spring-boot-starter-flyway-nc-cassandra`, `spring-boot-starter-flyway-nc-mongodb`) ship wiring for these two today. Other Flyway NC database modules can still be used with the generic starter by adding the appropriate `flyway-database-nc-*` dependency yourself, but there is no equivalent service-connection support for them.
 - **Spring Boot 4.1 is required and currently a release candidate.** The starter targets the Boot 4.1 autoconfiguration / `ConnectionDetails` APIs and is built against `4.1.0-RC1`. It will not run on Boot 3.x.
 - **`FLYWAY_NATIVE_CONNECTORS=true` is mandatory.** The starter does not — and cannot — set it for you. Without it Flyway silently uses its JDBC engine.
 - **No `DataSource` integration.** This is intentional (the NC engine has no `DataSource`), but it means everything Spring Boot's JDBC Flyway starter relies on a `DataSource` for (e.g. autodetection of credentials from `spring.datasource.*`) does not apply here. Configure `spring.flyway-nc.*` or supply a `FlywayNcConnectionDetails` bean.
@@ -154,6 +156,7 @@ Gradle (Kotlin DSL), use the wrapper:
 ./gradlew build                                       # compile + test + assemble all artifacts
 ./gradlew test                                        # unit + integration tests (JUnit 5)
 ./gradlew :spring-boot-starter-flyway-nc-cassandra:test --tests "*IT"   # Cassandra integration test (Testcontainers — requires Docker)
+./gradlew :spring-boot-starter-flyway-nc-mongodb:test --tests "*IT"     # MongoDB integration test (Testcontainers — requires Docker)
 ```
 
 The `Test` task always sets `FLYWAY_NATIVE_CONNECTORS=true`. Running JUnit directly from an IDE without that env var makes Flyway silently fall back to JDBC and tests fail confusingly — check this first if a failure looks like Flyway is hitting JDBC.

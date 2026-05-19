@@ -28,12 +28,14 @@ val flywayModules = listOf(
     "flyway-verb-schemas",
     "flyway-verb-validate",
     "flyway-database-nc-cassandra",
+    "flyway-database-nc-mongodb",
 )
 
 dependencies {
     constraints {
         api("${rootProject.group}:spring-boot-starter-flyway-nc:${rootProject.version}")
         api("${rootProject.group}:spring-boot-starter-flyway-nc-cassandra:${rootProject.version}")
+        api("${rootProject.group}:spring-boot-starter-flyway-nc-mongodb:${rootProject.version}")
 
         flywayModules.forEach { api("org.flywaydb:$it:$flywayVersion") }
     }

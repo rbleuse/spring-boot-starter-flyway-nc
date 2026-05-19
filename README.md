@@ -6,17 +6,21 @@ Spring Boot's built-in `spring-boot-starter-flyway` is JDBC-only (it requires a 
 
 ## Requirements
 
-- Spring Boot **4.1+** (tested against 4.1.0-RC1)
+- Spring Boot **4.1+** (currently tested against 4.1.0-RC1 — see [Limitations](#limitations))
 - Flyway **12.5+** with Native Connectors enabled (`FLYWAY_NATIVE_CONNECTORS=true`)
-- JVM 17+
+- JVM 17+ bytecode (toolchain provisioned at JDK 25, compiled to release 17)
+
+## Modules
+
+This build publishes three artifacts:
+
+| Coordinate | Purpose |
+|---|---|
+| `io.github.rbleuse:spring-boot-starter-flyway-nc` | The generic starter — autoconfig, properties, extension points. |
+| `io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra` | Cassandra support — see [the Cassandra module README](cassandra/README.md). |
+| `io.github.rbleuse:spring-boot-starter-flyway-nc-dependencies` | A `java-platform` BOM pinning every Flyway NC module to a single, override-able version. |
 
 ## Installation
-
-This project publishes three artifacts:
-
-- `io.github.rbleuse:spring-boot-starter-flyway-nc` — the generic starter
-- `io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra` — Cassandra support for the generic starter, including the Flyway Cassandra NC module and Docker Compose service connection details
-- `io.github.rbleuse:spring-boot-starter-flyway-nc-dependencies` — a BOM pinning every Flyway NC module to a single, override-able version
 
 ### With the Spring Boot Gradle plugin (recommended)
 
@@ -39,15 +43,11 @@ dependencies {
 }
 ```
 
-For Cassandra, use the Cassandra-specific starter instead. It pulls in the generic starter and the Cassandra Flyway NC database module:
+For database-specific starters (which bundle the matching `flyway-database-nc-*` module and service-connection factories), see the per-database READMEs:
 
-```kotlin
-dependencies {
-    implementation("io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra")
-}
-```
+- [Cassandra](cassandra/README.md)
 
-How resolution works: the starter declares `flyway-verb-migrate` and `flyway-nc-scanners` as `runtimeOnly` dependencies; the DB module transitively brings `flyway-core` and `flyway-nc-core`. The BOM pins every Flyway NC module to `${flyway.version}`, which `io.spring.dependency-management` lets you override via `extra["flyway.version"]` — the same mechanism Spring Boot uses for its own managed dependencies.
+**How resolution works:** the starter declares `flyway-verb-migrate` and `flyway-nc-scanners` as `runtimeOnly`; the DB module transitively brings `flyway-core` and `flyway-nc-core`. The BOM pins every Flyway NC module to `${flyway.version}`, which `io.spring.dependency-management` lets you override via `extra["flyway.version"]` — the same mechanism Spring Boot uses for its own managed dependencies.
 
 ### Enabling Flyway's Native Connectors path
 
@@ -57,7 +57,7 @@ Flyway requires the `FLYWAY_NATIVE_CONNECTORS` environment variable to use the N
 FLYWAY_NATIVE_CONNECTORS=true
 ```
 
-Without it, Flyway silently falls back to JDBC and the starter will fail confusingly.
+Without it, Flyway silently falls back to JDBC and migration will fail confusingly.
 
 ## Configuration
 
@@ -66,62 +66,43 @@ All properties are under the `spring.flyway-nc` prefix:
 | Property | Default | Description |
 |---|---|---|
 | `enabled` | `true` | Set to `false` to disable autoconfig entirely. |
-| `url` | — | The Flyway NC datasource URL (e.g. a Cassandra contact point URL). Required unless a `FlywayNcConnectionDetails` bean is provided, such as by Docker Compose service connections. |
+| `url` | — | The Flyway NC datasource URL. Required unless a `FlywayNcConnectionDetails` bean is provided, such as by a Docker Compose or Testcontainers service connection contributed by a database-specific starter. |
 | `user` | `null` | Optional username. |
 | `password` | `null` | Optional password. |
-| `locations` | `classpath:db/migration` | Migration locations, Flyway-style. |
-| `migration-suffixes` | `null` | Overrides Flyway's SQL migration suffixes (e.g. `.cql`). |
-| `default-schema` | `null` | Default schema/keyspace for migrations. |
+| `locations` | `[classpath:db/migration]` | Migration locations, Flyway-style. |
+| `migration-suffixes` | `[]` | Overrides Flyway's SQL migration suffixes (e.g. `.cql`). When empty, Flyway's defaults apply. |
+| `default-schema` | `null` | Default schema/keyspace for migrations — see [URL schema handling](#url-schema-handling) below for how this interacts with `url`. |
 
 Example `application.yml`:
 
 ```yaml
 spring:
   flyway-nc:
-    url: cassandra://localhost:9042/?localdatacenter=datacenter1
-    default-schema: my_keyspace
-    migration-suffixes: [".cql"]
+    url: <database-specific URL>
+    default-schema: my_schema
     locations:
       - classpath:db/migration
 ```
 
-### Docker Compose service connections
+URL formats and database-specific options are documented in the per-database READMEs (e.g. [Cassandra](cassandra/README.md#cassandra-url-format)).
 
-When both `io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra` and `org.springframework.boot:spring-boot-docker-compose` are on the classpath, Cassandra compose services are detected the same way Spring Boot detects them for Spring Data Cassandra. The Cassandra starter contributes a `FlywayNcConnectionDetails` bean for `cassandra` images and uses it to configure Flyway's NC URL:
+### URL schema handling
 
-```yaml
-services:
-  cassandra:
-    image: cassandra:5.0
-    ports:
-      - "9042"
-    environment:
-      CASSANDRA_DC: datacenter1
-      CASSANDRA_KEYSPACE: my_keyspace
-      CASSANDRA_USER: cassandra
-      CASSANDRA_PASSWORD: cassandra
-```
+The `url` and `default-schema` properties interact as follows:
 
-With that compose service, you can omit `spring.flyway-nc.url`, `spring.flyway-nc.user`, and `spring.flyway-nc.password`. The Docker Compose service connection supplies the mapped host and port, `CASSANDRA_DC` or `CASSANDRA_DATACENTER`, `CASSANDRA_KEYSPACE`, and credentials from `CASSANDRA_USER` or `CASSANDRA_USERNAME` plus `CASSANDRA_PASSWORD`.
+- If the URL already carries a path segment (e.g. `…://host:port/my_schema?…`), that path is treated as the schema and `default-schema` is **not** applied — the URL wins.
+- If the URL has no path (or just `/`) and `default-schema` is set, it is URL-encoded and appended as the path before passing the URL to Flyway. This is how the autoconfig steers Flyway toward a specific schema/keyspace when the connection details don't already encode one.
 
-### Testcontainers service connections
+### Service connections
 
-When `io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra` and `org.springframework.boot:spring-boot-testcontainers` are on the test classpath, a `CassandraContainer` annotated with `@ServiceConnection` supplies `spring.flyway-nc` connection details automatically:
-
-```kotlin
-@Container
-@ServiceConnection
-val cassandra = CassandraContainer(DockerImageName.parse("cassandra:5.0"))
-```
-
-Configure `spring.flyway-nc.default-schema` when Flyway should migrate a specific keyspace; the Cassandra container supplies host, port, local datacenter, username, and password.
+Database-specific starters can contribute `FlywayNcConnectionDetails` beans via Spring Boot's standard service-connection mechanism (Docker Compose, Testcontainers). When such a factory is on the classpath, you can omit `spring.flyway-nc.url`, `user`, and `password` entirely. See the per-database README — [Cassandra](cassandra/README.md#docker-compose-service-connections) — for examples.
 
 ## How it works
 
-`FlywayNcAutoConfiguration` is activated when `Flyway` is on the classpath and `spring.flyway-nc.enabled` is not `false`. It wires three beans, all gated with `@ConditionalOnMissingBean`:
+`FlywayNcAutoConfiguration` is activated when `org.flywaydb.core.Flyway` is on the classpath and `spring.flyway-nc.enabled` is not `false`. It wires three beans, all gated with `@ConditionalOnMissingBean`:
 
-1. **`FlywayNcConnectionDetails`** — built from `spring.flyway-nc.url`, `user`, and `password` when no service connection has provided one.
-2. **`Flyway`** — built from `FlywayNcConnectionDetails` plus the remaining `FlywayNcProperties`. All discovered `FlywayConfigurationCustomizer` beans run against the `FluentConfiguration` builder before `.load()`, in `@Order` order.
+1. **`FlywayNcConnectionDetails`** — a default implementation built from `spring.flyway-nc.url`, `user`, and `password`. Skipped when a service-connection factory (Docker Compose, Testcontainers) has already contributed one.
+2. **`Flyway`** — built from `FlywayNcConnectionDetails` plus the remaining `FlywayNcProperties`. All discovered `FlywayConfigurationCustomizer` beans run against the `FluentConfiguration` builder before `.load()`, ordered via `ObjectProvider.orderedStream()`.
 3. **`FlywayNcMigrationInitializer`** — an `InitializingBean` that calls `flyway.migrate()` (or a user-supplied `FlywayNcMigrationStrategy`) in `afterPropertiesSet()`.
 
 ## Extension points
@@ -145,26 +126,36 @@ fun migrationStrategy(): FlywayNcMigrationStrategy = FlywayNcMigrationStrategy {
 Runs against the Flyway *builder* before `.load()`. Prefer this over post-processing the `Flyway` bean when you need:
 
 - settings not exposed via `spring.flyway-nc.*`, or
-- an order dependency on a bootstrap bean — e.g. a `CqlSession` that must create the keyspace before migrations run — by taking that bean as a constructor parameter of the customizer.
+- an order dependency on a bootstrap bean — e.g. a session/client that must create the schema before migrations run — by taking that bean as a constructor parameter of the customizer.
 
 ```kotlin
 @Bean
-fun keyspaceBootstrap(session: CqlSession) = FlywayConfigurationCustomizer { config ->
-    session.execute("CREATE KEYSPACE IF NOT EXISTS my_keyspace WITH replication = {...}")
-    config.defaultSchema("my_keyspace")
+fun schemaBootstrap(client: SomeClient) = FlywayConfigurationCustomizer { config ->
+    client.createSchemaIfMissing("my_schema")
+    config.defaultSchema("my_schema")
 }
 ```
+
+For a worked Cassandra example, see [the Cassandra module README](cassandra/README.md#customizing-migration-startup).
+
+## Limitations
+
+- **Database coverage is currently Cassandra only.** The BOM and the dedicated database starter (`spring-boot-starter-flyway-nc-cassandra`) only ship Cassandra wiring today. Other Flyway NC database modules can still be used with the generic starter by adding the appropriate `flyway-database-nc-*` dependency yourself, but there is no equivalent service-connection support for them.
+- **Spring Boot 4.1 is required and currently a release candidate.** The starter targets the Boot 4.1 autoconfiguration / `ConnectionDetails` APIs and is built against `4.1.0-RC1`. It will not run on Boot 3.x.
+- **`FLYWAY_NATIVE_CONNECTORS=true` is mandatory.** The starter does not — and cannot — set it for you. Without it Flyway silently uses its JDBC engine.
+- **No `DataSource` integration.** This is intentional (the NC engine has no `DataSource`), but it means everything Spring Boot's JDBC Flyway starter relies on a `DataSource` for (e.g. autodetection of credentials from `spring.datasource.*`) does not apply here. Configure `spring.flyway-nc.*` or supply a `FlywayNcConnectionDetails` bean.
+- **`migration-suffixes` replaces Flyway's defaults rather than adding to them.** When set, only the listed suffixes are recognised.
 
 ## Building from source
 
 Gradle (Kotlin DSL), use the wrapper:
 
 ```
-./gradlew build               # compile + test + assemble
-./gradlew test                # unit + integration tests (JUnit 5)
-./gradlew test --tests "*IT"  # integration tests only (Testcontainers — requires Docker)
+./gradlew build                                       # compile + test + assemble all artifacts
+./gradlew test                                        # unit + integration tests (JUnit 5)
+./gradlew :spring-boot-starter-flyway-nc-cassandra:test --tests "*IT"   # Cassandra integration test (Testcontainers — requires Docker)
 ```
 
-The `Test` task always sets `FLYWAY_NATIVE_CONNECTORS=true`. Don't run JUnit directly from an IDE without that env var, or Flyway will silently fall back to JDBC and tests will fail confusingly.
+The `Test` task always sets `FLYWAY_NATIVE_CONNECTORS=true`. Running JUnit directly from an IDE without that env var makes Flyway silently fall back to JDBC and tests fail confusingly — check this first if a failure looks like Flyway is hitting JDBC.
 
-To build against a different Flyway version, edit the `flyway` entry in `gradle/libs.versions.toml`.
+To build against a different Flyway version, edit the `flyway` entry in `gradle/libs.versions.toml` — it is the single source of truth for both the starter's runtime deps and the BOM's pinned versions.

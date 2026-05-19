@@ -39,7 +39,6 @@ dependencies {
     runtimeOnly(libs.flyway.nc.scanners)
 
     compileOnly(libs.springBoot.autoconfigure)
-    implementation(libs.kotlin.reflect)
 
     testImplementation(platform(libs.springBoot.dependencies))
     testImplementation(libs.springBoot.starter.test)

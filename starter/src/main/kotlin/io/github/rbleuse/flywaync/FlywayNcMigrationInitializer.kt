@@ -5,8 +5,8 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.core.Ordered
 
 /**
- * {@link InitializingBean} used to trigger {@link Flyway} migration through the
- * {@link FlywayMigrationStrategy}.
+ * [InitializingBean] used to trigger [Flyway] migration through the
+ * [FlywayNcMigrationStrategy].
  */
 class FlywayNcMigrationInitializer(
     private val flyway: Flyway,

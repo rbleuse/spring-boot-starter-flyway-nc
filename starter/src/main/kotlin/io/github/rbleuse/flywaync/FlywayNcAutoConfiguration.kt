@@ -33,12 +33,20 @@ class FlywayNcAutoConfiguration {
         connectionDetails: FlywayNcConnectionDetails,
         customizers: ObjectProvider<FlywayConfigurationCustomizer>,
     ): Flyway {
-        val url = connectionDetails.url.withSchemaIfMissing(props.defaultSchema)
+        val rawUrl = connectionDetails.url
+        val urlCarriesSchema = rawUrl.hasSchemaInPath()
+        val resolvedUrl = if (urlCarriesSchema) rawUrl else rawUrl.withSchemaIfMissing(props.defaultSchema)
         val config = Flyway.configure()
-            .dataSource(url, connectionDetails.user, connectionDetails.password)
+            .dataSource(resolvedUrl, connectionDetails.user, connectionDetails.password)
             .locations(*props.locations.toTypedArray())
-        props.migrationSuffixes?.let { config.sqlMigrationSuffixes(*it.toTypedArray()) }
-        props.defaultSchema?.let { config.defaultSchema(it) }
+        if (props.migrationSuffixes.isNotEmpty()) {
+            config.sqlMigrationSuffixes(*props.migrationSuffixes.toTypedArray())
+        }
+        // Only configure defaultSchema when the URL didn't already carry one; otherwise the
+        // user-supplied URL's schema would silently lose to spring.flyway-nc.default-schema.
+        if (!urlCarriesSchema) {
+            props.defaultSchema?.takeUnless { it.isBlank() }?.let { config.defaultSchema(it) }
+        }
         customizers.orderedStream().forEach { it.customize(config) }
         return config.load()
     }
@@ -51,10 +59,14 @@ class FlywayNcAutoConfiguration {
     ): FlywayNcMigrationInitializer =
         FlywayNcMigrationInitializer(flyway, strategy.ifAvailable)
 
+    private fun String.hasSchemaInPath(): Boolean {
+        val uri = runCatching { URI(this) }.getOrNull() ?: return false
+        return !uri.rawPath.isNullOrEmpty() && uri.rawPath != "/"
+    }
+
     private fun String.withSchemaIfMissing(schema: String?): String {
         if (schema.isNullOrBlank()) return this
-        val uri = runCatching { URI(this) }.getOrNull() ?: return this
-        if (!uri.rawPath.isNullOrEmpty() && uri.rawPath != "/") return this
+        if (this.hasSchemaInPath()) return this
         val encoded = URLEncoder.encode(schema, StandardCharsets.UTF_8)
         val queryIdx = this.indexOf('?')
         val base = (if (queryIdx >= 0) this.substring(0, queryIdx) else this).trimEnd('/')

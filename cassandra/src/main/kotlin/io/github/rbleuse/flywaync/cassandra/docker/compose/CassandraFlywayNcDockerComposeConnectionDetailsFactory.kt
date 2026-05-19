@@ -9,6 +9,10 @@ import java.nio.charset.StandardCharsets
 
 internal class CassandraFlywayNcDockerComposeConnectionDetailsFactory :
     DockerComposeConnectionDetailsFactory<FlywayNcConnectionDetails>("cassandra") {
+    private companion object {
+        const val CASSANDRA_PORT = 9042
+        const val CASSANDRA_DEFAULT_DATACENTER = "datacenter1"
+    }
 
     override fun getDockerComposeConnectionDetails(source: DockerComposeConnectionSource): FlywayNcConnectionDetails {
         val service = source.runningService
@@ -31,13 +35,9 @@ internal class CassandraFlywayNcDockerComposeConnectionDetailsFactory :
         URLEncoder.encode(this, StandardCharsets.UTF_8)
 
     private class CassandraEnvironment(env: Map<String, String?>) {
-        val localDatacenter: String = env["CASSANDRA_DC"] ?: env["CASSANDRA_DATACENTER"] ?: "datacenter1"
+        val localDatacenter: String = env["CASSANDRA_DC"] ?: env["CASSANDRA_DATACENTER"] ?: CASSANDRA_DEFAULT_DATACENTER
         val keyspace: String? = env["CASSANDRA_KEYSPACE"]
         val user: String? = env["CASSANDRA_USER"] ?: env["CASSANDRA_USERNAME"]
         val password: String? = env["CASSANDRA_PASSWORD"]
-    }
-
-    private companion object {
-        const val CASSANDRA_PORT = 9042
     }
 }

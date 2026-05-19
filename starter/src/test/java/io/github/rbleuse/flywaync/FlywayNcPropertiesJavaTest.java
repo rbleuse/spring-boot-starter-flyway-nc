@@ -9,12 +9,11 @@ class FlywayNcPropertiesJavaTest {
     @Test
     void exposesFlywayNcPropertiesAsAJavaRecord() {
         var properties = new FlywayNcProperties(
-                true,
                 "native://localhost:1234/test",
                 null,
                 null,
                 List.of("classpath:db/migration"),
-                null,
+                List.of(),
                 null
         );
 

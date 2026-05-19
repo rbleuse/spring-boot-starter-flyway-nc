@@ -3,13 +3,14 @@
 import org.flywaydb.core.Flyway
 
 /**
- * Strategy used to initialize {@link Flyway} migration. Custom implementations may be
- * registered as a {@code @Bean} to override the default migration behavior.
+ * Strategy used to initialize [Flyway] migration. Custom implementations may be
+ * registered as a `@Bean` to override the default migration behavior.
  */
 fun interface FlywayNcMigrationStrategy {
     /**
-     * Trigger flyway migration.
-     * @param flyway the flyway instance
+     * Trigger Flyway migration.
+     *
+     * @param flyway the [Flyway] instance to migrate
      */
     fun migrate(flyway: Flyway)
 }

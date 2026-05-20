@@ -7,7 +7,10 @@ publishing {
         pom {
             url = githubUrl
             name = project.name
-            description = project.description ?: project.name
+            // Read description lazily — `subprojects { plugins.withId("java-library") { ... } }`
+            // in the root build creates the "maven" publication during the subproject's
+            // plugins block, before its `description = "…"` line has run.
+            description.set(project.providers.provider { project.description ?: project.name })
             licenses {
                 license {
                     name = "MIT License"

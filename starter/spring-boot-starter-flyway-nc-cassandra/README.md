@@ -16,7 +16,7 @@ dependencies {
 }
 ```
 
-See the [root README](../../README.md#installation) for the recommended setup with the Spring Boot Gradle plugin and the `spring-boot-starter-flyway-nc-dependencies` BOM, plus the mandatory `FLYWAY_NATIVE_CONNECTORS=true` environment variable.
+See the [root README](../../README.md#installation) for the recommended setup with the Spring Boot Gradle plugin and the `spring-boot-flyway-nc-dependencies` BOM, plus the mandatory `FLYWAY_NATIVE_CONNECTORS=true` environment variable.
 
 ## Configuration
 

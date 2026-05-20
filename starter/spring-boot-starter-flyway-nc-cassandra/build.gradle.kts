@@ -4,12 +4,9 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.spring")
     `java-library`
-    `maven-publish`
 }
 
-description = "MongoDB support for the Spring Boot Flyway native connectors starter"
-
-apply(from = "../../gradle/publishing.gradle")
+description = "Cassandra support for the Spring Boot Flyway native connectors starter"
 
 java {
     toolchain {
@@ -40,17 +37,16 @@ dependencies {
     compileOnly(libs.springBoot.autoconfigure)
     compileOnly(libs.springBoot.docker.compose)
     compileOnly(libs.springBoot.testcontainers)
-    compileOnly(libs.testcontainers.mongodb)
-    runtimeOnly(libs.flyway.database.nc.mongodb)
+    compileOnly(libs.testcontainers.cassandra)
+    runtimeOnly(libs.flyway.database.nc.cassandra)
 
     testImplementation(platform(libs.springBoot.dependencies))
     testImplementation(libs.springBoot.docker.compose)
     testImplementation(libs.springBoot.starter.test)
     testImplementation(libs.springBoot.testcontainers)
-    testImplementation(libs.testcontainers.mongodb)
+    testImplementation(libs.testcontainers.cassandra)
     testImplementation(libs.testcontainers.junit.jupiter)
-    testImplementation(libs.flyway.database.nc.mongodb)
-    testImplementation(libs.mongodb.driver.sync)
+    testImplementation(libs.flyway.database.nc.cassandra)
     testImplementation(libs.kotest.assertions.core)
 
     testRuntimeOnly(libs.junit.platform.launcher)
@@ -59,12 +55,4 @@ dependencies {
 tasks.withType<Test> {
     useJUnitPlatform()
     environment("FLYWAY_NATIVE_CONNECTORS", "true")
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
-        }
-    }
 }

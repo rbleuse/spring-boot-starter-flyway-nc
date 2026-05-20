@@ -1,6 +1,5 @@
 plugins {
     `java-platform`
-    `maven-publish`
 }
 
 group = rootProject.group
@@ -35,7 +34,9 @@ dependencies {
     constraints {
         api("${rootProject.group}:spring-boot-starter-flyway-nc:${rootProject.version}")
         api("${rootProject.group}:spring-boot-starter-flyway-nc-cassandra:${rootProject.version}")
+        api("${rootProject.group}:spring-boot-starter-flyway-nc-cassandra-test:${rootProject.version}")
         api("${rootProject.group}:spring-boot-starter-flyway-nc-mongodb:${rootProject.version}")
+        api("${rootProject.group}:spring-boot-starter-flyway-nc-mongodb-test:${rootProject.version}")
 
         flywayModules.forEach { api("org.flywaydb:$it:$flywayVersion") }
     }
@@ -76,5 +77,3 @@ publishing {
         }
     }
 }
-
-apply(from = "../gradle/publishing.gradle")

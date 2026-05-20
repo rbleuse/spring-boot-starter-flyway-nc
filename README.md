@@ -12,14 +12,16 @@ Spring Boot's built-in `spring-boot-starter-flyway` is JDBC-only (it requires a 
 
 ## Modules
 
-This build publishes four artifacts:
+This build publishes six artifacts:
 
 | Coordinate | Purpose |
 |---|---|
 | `io.github.rbleuse:spring-boot-starter-flyway-nc` | The generic starter — autoconfig, properties, extension points. |
-| `io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra` | Cassandra support — see [the Cassandra module README](database/cassandra/README.md). |
-| `io.github.rbleuse:spring-boot-starter-flyway-nc-mongodb` | MongoDB support — see [the MongoDB module README](database/mongodb/README.md). |
-| `io.github.rbleuse:spring-boot-starter-flyway-nc-dependencies` | A `java-platform` BOM pinning every Flyway NC module to a single, override-able version. |
+| `io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra` | Cassandra support — see [the Cassandra module README](starter/spring-boot-starter-flyway-nc-cassandra/README.md). |
+| `io.github.rbleuse:spring-boot-starter-flyway-nc-cassandra-test` | Thin test starter — pulls in `spring-boot-starter-flyway-nc-cassandra` plus `spring-boot-starter-test`. |
+| `io.github.rbleuse:spring-boot-starter-flyway-nc-mongodb` | MongoDB support — see [the MongoDB module README](starter/spring-boot-starter-flyway-nc-mongodb/README.md). |
+| `io.github.rbleuse:spring-boot-starter-flyway-nc-mongodb-test` | Thin test starter — pulls in `spring-boot-starter-flyway-nc-mongodb` plus `spring-boot-starter-test`. |
+| `io.github.rbleuse:spring-boot-flyway-nc-dependencies` | A `java-platform` BOM pinning every Flyway NC module to a single, override-able version. |
 
 ## Installation
 
@@ -34,7 +36,7 @@ extra["flyway.version"] = "12.6.0" // optional override; defaults to the BOM's p
 
 dependencyManagement {
     imports {
-        mavenBom("io.github.rbleuse:spring-boot-starter-flyway-nc-dependencies:<version>")
+        mavenBom("io.github.rbleuse:spring-boot-flyway-nc-dependencies:<version>")
     }
 }
 
@@ -46,8 +48,8 @@ dependencies {
 
 For database-specific starters (which bundle the matching `flyway-database-nc-*` module and service-connection factories), see the per-database READMEs:
 
-- [Cassandra](database/cassandra/README.md)
-- [MongoDB](database/mongodb/README.md)
+- [Cassandra](starter/spring-boot-starter-flyway-nc-cassandra/README.md)
+- [MongoDB](starter/spring-boot-starter-flyway-nc-mongodb/README.md)
 
 **How resolution works:** the starter declares `flyway-verb-migrate` and `flyway-nc-scanners` as `runtimeOnly`; the DB module transitively brings `flyway-core` and `flyway-nc-core`. The BOM pins every Flyway NC module to `${flyway.version}`, which `io.spring.dependency-management` lets you override via `extra["flyway.version"]` — the same mechanism Spring Boot uses for its own managed dependencies.
 
@@ -86,7 +88,7 @@ spring:
       - classpath:db/migration
 ```
 
-URL formats and database-specific options are documented in the per-database READMEs ([Cassandra](database/cassandra/README.md#cassandra-url-format), [MongoDB](database/mongodb/README.md#mongodb-url-format)).
+URL formats and database-specific options are documented in the per-database READMEs ([Cassandra](starter/spring-boot-starter-flyway-nc-cassandra/README.md#cassandra-url-format), [MongoDB](starter/spring-boot-starter-flyway-nc-mongodb/README.md#mongodb-url-format)).
 
 ### URL schema handling
 
@@ -97,7 +99,7 @@ The `url` and `default-schema` properties interact as follows:
 
 ### Service connections
 
-Database-specific starters can contribute `FlywayNcConnectionDetails` beans via Spring Boot's standard service-connection mechanism (Docker Compose, Testcontainers). When such a factory is on the classpath, you can omit `spring.flyway-nc.url`, `user`, and `password` entirely. See the per-database READMEs — [Cassandra](database/cassandra/README.md#docker-compose-service-connections), [MongoDB](database/mongodb/README.md#docker-compose-service-connections) — for examples.
+Database-specific starters can contribute `FlywayNcConnectionDetails` beans via Spring Boot's standard service-connection mechanism (Docker Compose, Testcontainers). When such a factory is on the classpath, you can omit `spring.flyway-nc.url`, `user`, and `password` entirely. See the per-database READMEs — [Cassandra](starter/spring-boot-starter-flyway-nc-cassandra/README.md#docker-compose-service-connections), [MongoDB](starter/spring-boot-starter-flyway-nc-mongodb/README.md#docker-compose-service-connections) — for examples.
 
 ## How it works
 
@@ -138,7 +140,7 @@ fun schemaBootstrap(client: SomeClient) = FlywayConfigurationCustomizer { config
 }
 ```
 
-For a worked Cassandra example, see [the Cassandra module README](database/cassandra/README.md#customizing-migration-startup).
+For a worked Cassandra example, see [the Cassandra module README](starter/spring-boot-starter-flyway-nc-cassandra/README.md#customizing-migration-startup).
 
 ## Limitations
 

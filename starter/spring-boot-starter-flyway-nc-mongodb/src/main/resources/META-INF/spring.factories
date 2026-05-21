@@ -1,0 +1,4 @@
+# Connection Details Factories
+org.springframework.boot.autoconfigure.service.connection.ConnectionDetailsFactory=\
+io.github.rbleuse.flywaync.mongodb.docker.compose.MongoDBFlywayNcDockerComposeConnectionDetailsFactory,\
+io.github.rbleuse.flywaync.mongodb.testcontainers.MongoDBContainerFlywayNcConnectionDetailsFactory

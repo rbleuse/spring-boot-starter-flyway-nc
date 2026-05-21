@@ -2,6 +2,7 @@
 flyway = "12.5.0"
 springBoot = "4.1.0-RC1"
 kotest = "6.1.11"
+kotlin = "2.3.21"
 
 [libraries]
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
@@ -10,17 +11,24 @@ flyway-nc-scanners = { module = "org.flywaydb:flyway-nc-scanners", version.ref =
 
 springBoot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
 springBoot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "springBoot" }
+springBoot-docker-compose = { module = "org.springframework.boot:spring-boot-docker-compose", version.ref = "springBoot" }
 springBoot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 springBoot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }
 
 testcontainers-cassandra = { module = "org.testcontainers:testcontainers-cassandra" }
+testcontainers-mongodb = { module = "org.testcontainers:testcontainers-mongodb" }
 testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }
 
-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
+mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync" }
+
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-allopen = { module = "org.jetbrains.kotlin:kotlin-allopen", version.ref = "kotlin" }
+
 
 # Database dependencies
 flyway-database-nc-cassandra = { module = "org.flywaydb:flyway-database-nc-cassandra", version.ref = "flyway" }
+flyway-database-nc-mongodb = { module = "org.flywaydb:flyway-database-nc-mongodb", version.ref = "flyway" }

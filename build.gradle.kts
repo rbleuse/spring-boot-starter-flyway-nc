@@ -1,73 +1,31 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
-plugins {
-    kotlin("jvm") version "2.3.21"
-    kotlin("plugin.spring") version "2.3.21"
-    `java-library`
-    `maven-publish`
-}
-
 group = "io.github.rbleuse"
 version = "1.0.0-SNAPSHOT"
-description = "Spring Boot starter for Flyway native (non-JDBC) connectors"
+description = "Spring Boot starters for Flyway native connectors"
 
-apply(from = "gradle/publishing.gradle")
+allprojects {
+    group = rootProject.group
+    version = rootProject.version
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(25)
-    }
-
-    withSourcesJar()
-    withJavadocJar()
-}
-
-kotlin {
-    jvmToolchain(25)
-
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_17
-        freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
+    repositories {
+        mavenCentral()
+        maven("https://repo.spring.io/milestone")
     }
 }
 
-tasks.withType<JavaCompile>().configureEach {
-    options.release = 17
-}
+subprojects {
+    apply(plugin = "maven-publish")
+    apply(from = "${rootDir}/gradle/publishing.gradle")
 
-repositories {
-    mavenCentral()
-    maven("https://repo.spring.io/milestone")
-}
-
-dependencies {
-    compileOnly(libs.flyway.core)
-    runtimeOnly(libs.flyway.verb.migrate)
-    runtimeOnly(libs.flyway.nc.scanners)
-
-    compileOnly(libs.springBoot.autoconfigure)
-    implementation(libs.kotlin.reflect)
-
-    testImplementation(platform(libs.springBoot.dependencies))
-    testImplementation(libs.springBoot.starter.test)
-    testImplementation(libs.springBoot.testcontainers)
-    testImplementation(libs.testcontainers.cassandra)
-    testImplementation(libs.testcontainers.junit.jupiter)
-    testImplementation(libs.flyway.database.nc.cassandra)
-    testImplementation(libs.kotest.assertions.core)
-
-    testRuntimeOnly(libs.junit.platform.launcher)
-}
-
-tasks.withType<Test> {
-    useJUnitPlatform()
-    environment("FLYWAY_NATIVE_CONNECTORS", "true")
-}
-
-publishing {
-    publications {
-        create<MavenPublication>("maven") {
-            from(components["java"])
+    // Standard java-library publishing block. The BOM uses javaPlatform and
+    // declares its own publishing block (with the pom.withXml rewrite), so
+    // we filter on java-library — that's applied to the starters only.
+    plugins.withId("java-library") {
+        extensions.configure<PublishingExtension> {
+            publications {
+                create<MavenPublication>("maven") {
+                    from(components["java"])
+                }
+            }
         }
     }
 }

@@ -2,6 +2,7 @@
 flyway = "12.5.0"
 springBoot = "4.1.0-RC1"
 kotest = "6.1.11"
+kotlin = "2.3.21"
 
 [libraries]
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
@@ -23,6 +24,9 @@ mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync" }
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
 
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+
+kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
+kotlin-allopen = { module = "org.jetbrains.kotlin:kotlin-allopen", version.ref = "kotlin" }
 
 
 # Database dependencies

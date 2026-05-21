@@ -33,9 +33,32 @@ class MongoDBFlywayNcDockerComposeConnectionDetailsFactoryTest {
             .getConnectionDetails(source, false)[FlywayNcConnectionDetails::class.java]
                 as FlywayNcConnectionDetails
 
-        details.url shouldBe "mongodb://127.0.0.1:37017/flyway_db"
+        details.url shouldBe "mongodb://127.0.0.1:37017/flyway_db?authSource=admin"
         details.user shouldBe "flyway_user"
         details.password shouldBe "flyway_password"
+    }
+
+    @Test
+    fun `omits authSource when no credentials are provided`() {
+        val source = dockerComposeConnectionSource(
+            object : RunningService {
+                override fun name(): String = "mongo"
+                override fun image(): ImageReference = ImageReference.of("mongo:8.0.21")
+                override fun host(): String = "127.0.0.1"
+                override fun ports(): ConnectionPorts = singlePort(27017, 37017)
+                override fun env(): Map<String, String> =
+                    mapOf("MONGO_INITDB_DATABASE" to "flyway_db")
+                override fun labels(): Map<String, String> = emptyMap()
+            },
+        )
+
+        val details = ConnectionDetailsFactories(javaClass.classLoader)
+            .getConnectionDetails(source, false)[FlywayNcConnectionDetails::class.java]
+                as FlywayNcConnectionDetails
+
+        details.url shouldBe "mongodb://127.0.0.1:37017/flyway_db"
+        details.user shouldBe null
+        details.password shouldBe null
     }
 
     private fun dockerComposeConnectionSource(service: RunningService): DockerComposeConnectionSource {

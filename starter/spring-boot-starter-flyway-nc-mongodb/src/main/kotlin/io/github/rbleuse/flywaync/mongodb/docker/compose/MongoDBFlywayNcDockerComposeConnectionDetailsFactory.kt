@@ -27,6 +27,7 @@ internal class MongoDBFlywayNcDockerComposeConnectionDetailsFactory :
         buildString {
             append("mongodb://${host()}:${ports().get(MONGODB_PORT)}")
             environment.database?.let { append("/").append(it.urlEncode()) }
+            if (environment.user != null) append("?authSource=admin")
         }
 
     private fun String.urlEncode(): String =

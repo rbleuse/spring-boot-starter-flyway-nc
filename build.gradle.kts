@@ -1,6 +1,6 @@
 group = "io.github.rbleuse"
 version = "1.0.0-SNAPSHOT"
-description = "Spring Boot starters for Flyway native (non-JDBC) connectors"
+description = "Spring Boot starters for Flyway native connectors"
 
 allprojects {
     group = rootProject.group

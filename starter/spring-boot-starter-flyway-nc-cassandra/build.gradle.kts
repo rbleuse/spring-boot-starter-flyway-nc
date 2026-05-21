@@ -12,6 +12,8 @@ dependencies {
     compileOnly(libs.springBoot.docker.compose)
     compileOnly(libs.springBoot.testcontainers)
     compileOnly(libs.testcontainers.cassandra)
+
+    runtimeOnly(platform(libs.springBoot.dependencies))
     runtimeOnly(libs.flyway.database.nc.cassandra)
 
     testImplementation(platform(libs.springBoot.dependencies))

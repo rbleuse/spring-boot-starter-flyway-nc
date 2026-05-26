@@ -19,6 +19,11 @@ dependencies {
     testImplementation(libs.springBoot.starter.test)
 }
 
-tasks.matching { it.name == "kaptKotlin" }.configureEach {
-    dependsOn(tasks.processResources)
+kapt {
+    arguments {
+        arg(
+            "org.springframework.boot.configurationprocessor.additionalMetadataLocations",
+            layout.projectDirectory.dir("src/main/resources").asFile.absolutePath,
+        )
+    }
 }

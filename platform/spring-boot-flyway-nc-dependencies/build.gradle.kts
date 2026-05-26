@@ -1,5 +1,6 @@
 plugins {
     `java-platform`
+    `flyway-nc-publishing`
 }
 
 group = rootProject.group

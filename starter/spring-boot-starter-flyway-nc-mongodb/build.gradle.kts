@@ -1,5 +1,6 @@
 plugins {
     `flyway-nc-kotlin-module`
+    `flyway-nc-publishing`
 }
 
 description = "MongoDB support for the Spring Boot Flyway native connectors starter"

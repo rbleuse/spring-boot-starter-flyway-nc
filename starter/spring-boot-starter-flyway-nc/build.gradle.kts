@@ -1,5 +1,6 @@
 plugins {
     `flyway-nc-kotlin-module`
+    `flyway-nc-publishing`
     kotlin("kapt")
 }
 

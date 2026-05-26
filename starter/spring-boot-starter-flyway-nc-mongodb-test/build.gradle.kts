@@ -1,5 +1,6 @@
 plugins {
     `java-library`
+    `flyway-nc-publishing`
 }
 
 description = "Starter for testing Spring Boot apps that use Flyway NC with MongoDB"

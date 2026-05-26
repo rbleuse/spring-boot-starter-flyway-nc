@@ -4,10 +4,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class FlywayNcPropertiesJavaTest {
+class FlywayNcPropertiesJavaInteropTest {
 
     @Test
-    void exposesFlywayNcPropertiesAsAJavaRecord() {
+    void exposesFlywayNcPropertiesAccessorsToJava() {
         var properties = new FlywayNcProperties(
                 "native://localhost:1234/test",
                 null,
@@ -17,8 +17,7 @@ class FlywayNcPropertiesJavaTest {
                 null
         );
 
-        assertThat(FlywayNcProperties.class.isRecord()).isTrue();
-        assertThat(properties.url()).isEqualTo("native://localhost:1234/test");
-        assertThat(properties.locations()).containsExactly("classpath:db/migration");
+        assertThat(properties.getUrl()).isEqualTo("native://localhost:1234/test");
+        assertThat(properties.getLocations()).containsExactly("classpath:db/migration");
     }
 }

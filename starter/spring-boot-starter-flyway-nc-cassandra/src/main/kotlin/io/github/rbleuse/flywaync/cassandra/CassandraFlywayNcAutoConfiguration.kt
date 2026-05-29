@@ -7,10 +7,12 @@ import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Import
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 
 @AutoConfiguration(before = [FlywayNcAutoConfiguration::class])
+@Import(FlywayNcAutoConfiguration::class)
 @ConditionalOnBooleanProperty(name = ["spring.flyway-nc.enabled"], matchIfMissing = true)
 @EnableConfigurationProperties(FlywayNcProperties::class)
 class CassandraFlywayNcAutoConfiguration {

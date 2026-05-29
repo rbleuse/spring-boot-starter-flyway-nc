@@ -24,4 +24,11 @@ jobs:
         uses: gradle/actions/dependency-submission@v6
         with:
           dependency-graph: generate-and-submit
+        env:
+          # Exclude the Kotlin Gradle Plugin's internal Bouncy Castle configuration from the
+          # submitted dependency graph. It is used only for publishing-signature validation at
+          # build time (not compiled, not on runtime/test classpaths, not in any published
+          # artifact), so its bundled bcprov-jdk18on is not exploitable here. Excluding it keeps
+          # build-only deps out of Dependabot alerts (e.g. the FrodoEngine timing-channel CVE).
+          DEPENDENCY_GRAPH_EXCLUDE_CONFIGURATIONS: kotlinBouncyCastleConfiguration
       - run: chmod +x gradlew && ./gradlew test

@@ -27,8 +27,9 @@ spring:
   flyway-nc:
     url: cassandra://localhost:9042?localdatacenter=datacenter1
     default-schema: my_keyspace
-    migration-suffixes: [".cql"]
 ```
+
+This starter defaults `spring.flyway-nc.migration-suffixes` to `[".cql"]` (Flyway's own default is `.sql`), so you don't need to set it. Provide the property explicitly to override.
 
 ### Cassandra URL format
 
@@ -100,7 +101,7 @@ To skip migration entirely in tests, or to run `repair()` first, supply a [`Flyw
 
 ## Writing migrations
 
-Place `.cql` files under `src/main/resources/db/migration/` (or wherever `spring.flyway-nc.locations` points). Flyway's standard `V<version>__<description>.cql` naming applies. Don't forget `spring.flyway-nc.migration-suffixes: [".cql"]` — `.sql` is Flyway's default.
+Place `.cql` files under `src/main/resources/db/migration/` (or wherever `spring.flyway-nc.locations` points). Flyway's standard `V<version>__<description>.cql` naming applies. This starter already defaults `spring.flyway-nc.migration-suffixes` to `[".cql"]` (Flyway's own default is `.sql`), so no extra configuration is needed unless you want a different suffix.
 
 ```cql
 -- V1__create_users_table.cql

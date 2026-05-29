@@ -8,6 +8,7 @@ description = "Cassandra support for the Spring Boot Flyway native connectors st
 dependencies {
     api(project(":spring-boot-starter-flyway-nc"))
 
+    compileOnly(libs.flyway.core)
     compileOnly(platform(libs.springBoot.dependencies))
     compileOnly(libs.springBoot.autoconfigure)
     compileOnly(libs.springBoot.docker.compose)

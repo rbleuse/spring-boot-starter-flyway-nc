@@ -14,8 +14,9 @@ import java.net.InetSocketAddress
 
 @SpringBootTest(
     properties = [
+        // No spring.flyway-nc.migration-suffixes here on purpose: the Cassandra starter defaults
+        // it to .cql via CassandraFlywayNcAutoConfiguration, so this IT also guards that default.
         "spring.flyway-nc.default-schema=flyway_nc_it",
-        "spring.flyway-nc.migration-suffixes[0]=.cql",
     ],
 )
 @SpringBootConfiguration

@@ -90,6 +90,14 @@ tasks.withType<Sign>().configureEach {
 // declares its own publishing block (with the pom.withXml rewrite), so
 // we filter on java-library — that's applied to the starters only.
 plugins.withId("java-library") {
+    // Maven Central rejects jar-packaged artifacts without -sources and -javadoc
+    // jars. Register them here (rather than per-module) so every published
+    // java-library module gets them — including the source-less -test starters,
+    // which don't apply the Kotlin convention.
+    extensions.configure<JavaPluginExtension> {
+        withSourcesJar()
+        withJavadocJar()
+    }
     publishing {
         publications {
             create<MavenPublication>("maven") {

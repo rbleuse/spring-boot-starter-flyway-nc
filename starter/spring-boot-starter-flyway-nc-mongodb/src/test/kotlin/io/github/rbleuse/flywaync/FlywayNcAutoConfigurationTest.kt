@@ -73,6 +73,37 @@ class FlywayNcAutoConfigurationTest {
     }
 
     @Test
+    fun `multi-host URL keeps its path and ignores default-schema`() {
+        ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
+            .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
+            .withPropertyValues(
+                "spring.flyway-nc.url=mongodb://host1:27017,host2:27017/explicit_db?replicaSet=rs0",
+                "spring.flyway-nc.default-schema=ignored_db",
+            )
+            .run { context ->
+                val configuration = context.getBean<Flyway>().configuration
+                configuration.url shouldBe "mongodb://host1:27017,host2:27017/explicit_db?replicaSet=rs0"
+                configuration.defaultSchema shouldBe null
+            }
+    }
+
+    @Test
+    fun `default-schema is appended to a multi-host URL without a path`() {
+        ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
+            .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
+            .withPropertyValues(
+                "spring.flyway-nc.url=mongodb://host1:27017,host2:27017?replicaSet=rs0",
+                "spring.flyway-nc.default-schema=mydb",
+            )
+            .run { context ->
+                context.getBean<Flyway>().configuration.url shouldBe
+                    "mongodb://host1:27017,host2:27017/mydb?replicaSet=rs0"
+            }
+    }
+
+    @Test
     fun `customizer is invoked on the Flyway builder before load`() {
         val callCount = AtomicInteger()
         contextRunner

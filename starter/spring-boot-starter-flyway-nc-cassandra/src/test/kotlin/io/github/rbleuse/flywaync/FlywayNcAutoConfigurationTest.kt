@@ -1,6 +1,7 @@
 ﻿package io.github.rbleuse.flywaync
 
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.getBean
@@ -70,6 +71,54 @@ class FlywayNcAutoConfigurationTest {
                     "cassandra://compose-host:19042/compose_keyspace?localdatacenter=compose-dc"
                 configuration.user shouldBe "compose-user"
                 configuration.password shouldBe "compose-password"
+            }
+    }
+
+    @Test
+    fun `default-schema is URL-encoded and appended when the URL has no path`() {
+        ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
+            .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
+            .withPropertyValues(
+                "spring.flyway-nc.url=cassandra://localhost:9042?localdatacenter=dc1",
+                "spring.flyway-nc.default-schema=my keyspace",
+            )
+            .run { context ->
+                context.getBean<Flyway>().configuration.url shouldBe
+                    "cassandra://localhost:9042/my%20keyspace?localdatacenter=dc1"
+            }
+    }
+
+    @Test
+    fun `URL-supplied schema wins over default-schema`() {
+        ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
+            .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
+            .withPropertyValues(
+                "spring.flyway-nc.url=cassandra://localhost:9042/explicit_ks?localdatacenter=dc1",
+                "spring.flyway-nc.default-schema=ignored_ks",
+            )
+            .run { context ->
+                val configuration = context.getBean<Flyway>().configuration
+                configuration.url shouldBe "cassandra://localhost:9042/explicit_ks?localdatacenter=dc1"
+                configuration.defaultSchema shouldBe null
+            }
+    }
+
+    @Test
+    fun `fails with a helpful message when no connection source is available`() {
+        ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
+            .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
+            .run { context ->
+                val failure = context.startupFailure
+                failure shouldNotBe null
+                val messages = generateSequence<Throwable>(failure) { it.cause }
+                    .mapNotNull { it.message }
+                    .toList()
+                messages.any {
+                    it.contains("spring.flyway-nc.url") && it.contains("service connection", ignoreCase = true)
+                } shouldBe true
             }
     }
 

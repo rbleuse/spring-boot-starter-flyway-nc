@@ -6,9 +6,9 @@ import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
-import java.net.URI
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets
 class FlywayNcAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
+    @ConditionalOnProperty(prefix = "spring.flyway-nc", name = ["url"])
     fun flywayNcConnectionDetails(props: FlywayNcProperties): FlywayNcConnectionDetails =
         object : FlywayNcConnectionDetails {
             override val url: String = requireNotNull(props.url) { "spring.flyway-nc.url must be configured" }
@@ -30,9 +31,15 @@ class FlywayNcAutoConfiguration {
     @ConditionalOnMissingBean
     fun flyway(
         props: FlywayNcProperties,
-        connectionDetails: FlywayNcConnectionDetails,
+        connectionDetailsProvider: ObjectProvider<FlywayNcConnectionDetails>,
         customizers: ObjectProvider<FlywayConfigurationCustomizer>,
     ): Flyway {
+        val connectionDetails = connectionDetailsProvider.ifAvailable
+            ?: error(
+                "No FlywayNcConnectionDetails available. Configure 'spring.flyway-nc.url', " +
+                    "register a service connection (Docker Compose or Testcontainers @ServiceConnection), " +
+                    "or declare a FlywayNcConnectionDetails bean.",
+            )
         val rawUrl = connectionDetails.url
         val urlCarriesSchema = rawUrl.hasSchemaInPath()
         val resolvedUrl = if (urlCarriesSchema) rawUrl else rawUrl.withSchemaIfMissing(props.defaultSchema)
@@ -60,14 +67,19 @@ class FlywayNcAutoConfiguration {
         FlywayNcMigrationInitializer(flyway, strategy.ifAvailable)
 
     private fun String.hasSchemaInPath(): Boolean {
-        val uri = runCatching { URI(this) }.getOrNull() ?: return false
-        return !uri.rawPath.isNullOrEmpty() && uri.rawPath != "/"
+        val schemeSep = this.indexOf("://")
+        if (schemeSep < 0) return false
+        val authorityStart = schemeSep + 3
+        val queryIdx = this.indexOf('?', authorityStart)
+        val authorityEnd = if (queryIdx >= 0) queryIdx else this.length
+        val slashIdx = this.indexOf('/', authorityStart)
+        return slashIdx in 0..<authorityEnd && this.substring(slashIdx + 1, authorityEnd).isNotEmpty()
     }
 
     private fun String.withSchemaIfMissing(schema: String?): String {
         if (schema.isNullOrBlank()) return this
-        if (this.hasSchemaInPath()) return this
-        val encoded = URLEncoder.encode(schema, StandardCharsets.UTF_8)
+        if (this.indexOf("://") < 0 || this.hasSchemaInPath()) return this
+        val encoded = URLEncoder.encode(schema, StandardCharsets.UTF_8).replace("+", "%20")
         val queryIdx = this.indexOf('?')
         val base = (if (queryIdx >= 0) this.substring(0, queryIdx) else this).trimEnd('/')
         val query = if (queryIdx >= 0) this.substring(queryIdx) else ""

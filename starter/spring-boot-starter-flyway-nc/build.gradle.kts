@@ -28,3 +28,12 @@ kapt {
         )
     }
 }
+
+// The Spring configuration processor is registered on the `kapt` (main) configuration only.
+// kapt still spins up a processing round for the test source set, where no annotation processor
+// claims the globally-applied arguments (additionalMetadataLocations) or kapt's own injected
+// kapt.kotlin.generated option, producing a spurious "options were not recognized by any
+// processor" warning. Nothing is generated for tests, so disable the test kapt round entirely.
+// Matched lazily because kapt registers these tasks after this script is evaluated.
+tasks.matching { it.name == "kaptTestKotlin" || it.name == "kaptGenerateStubsTestKotlin" }
+    .configureEach { enabled = false }

@@ -42,7 +42,7 @@
     {
       "name": "spring.flyway-nc.migration-suffixes",
       "type": "java.util.List<java.lang.String>",
-      "description": "Migration file suffixes Flyway recognizes. Replaces Flyway's defaults rather than adding to them; when empty, Flyway's defaults apply.",
+      "description": "Migration file suffixes Flyway recognizes. Replaces Flyway's defaults rather than adding to them. When empty, the active database starter applies its own default (Cassandra: .cql; MongoDB: .js/.json), otherwise Flyway's default (.sql) applies.",
       "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
     }
   ]

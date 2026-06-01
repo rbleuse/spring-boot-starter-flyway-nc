@@ -29,6 +29,21 @@
       "type": "java.lang.String",
       "description": "Default schema (Cassandra keyspace / MongoDB database) appended to the URL path when the URL itself does not carry one.",
       "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.locations",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Locations Flyway scans for migrations.",
+      "defaultValue": [
+        "classpath:db/migration"
+      ],
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.migration-suffixes",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Migration file suffixes Flyway recognizes. Replaces Flyway's defaults rather than adding to them; when empty, Flyway's defaults apply.",
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
     }
   ]
 }

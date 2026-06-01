@@ -3,8 +3,10 @@ package io.github.rbleuse.flywaync.cassandra
 import io.github.rbleuse.flywaync.FlywayConfigurationCustomizer
 import io.github.rbleuse.flywaync.FlywayNcAutoConfiguration
 import io.github.rbleuse.flywaync.FlywayNcProperties
+import org.flywaydb.core.Flyway
 import org.springframework.boot.autoconfigure.AutoConfiguration
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBooleanProperty
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
@@ -12,6 +14,7 @@ import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 
 @AutoConfiguration(before = [FlywayNcAutoConfiguration::class])
+@ConditionalOnClass(Flyway::class)
 @Import(FlywayNcAutoConfiguration::class)
 @ConditionalOnBooleanProperty(name = ["spring.flyway-nc.enabled"], matchIfMissing = true)
 @EnableConfigurationProperties(FlywayNcProperties::class)

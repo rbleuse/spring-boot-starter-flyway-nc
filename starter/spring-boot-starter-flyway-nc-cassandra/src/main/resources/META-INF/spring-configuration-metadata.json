@@ -1,0 +1,13 @@
+{
+  "properties": [
+    {
+      "name": "spring.flyway-nc.migration-suffixes",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Migration file suffixes. The Cassandra starter defaults this to .cql (Flyway's own default is .sql).",
+      "defaultValue": [
+        ".cql"
+      ],
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    }
+  ]
+}

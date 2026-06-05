@@ -1,0 +1,49 @@
+{
+  "properties": [
+    {
+      "name": "spring.flyway-nc.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable Flyway native-connectors auto-configuration.",
+      "defaultValue": true
+    },
+    {
+      "name": "spring.flyway-nc.url",
+      "type": "java.lang.String",
+      "description": "Flyway native-connector URL (e.g. cassandra://host:port/keyspace, mongodb://host:port/db). Overrides any service-connection-supplied URL.",
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.user",
+      "type": "java.lang.String",
+      "description": "Username used to connect to the database.",
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.password",
+      "type": "java.lang.String",
+      "description": "Password used to connect to the database.",
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.default-schema",
+      "type": "java.lang.String",
+      "description": "Default schema (Cassandra keyspace / MongoDB database) appended to the URL path when the URL itself does not carry one.",
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.locations",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Locations Flyway scans for migrations.",
+      "defaultValue": [
+        "classpath:db/migration"
+      ],
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.migration-suffixes",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Migration file suffixes Flyway recognizes. Replaces Flyway's defaults rather than adding to them. When empty, the active database starter applies its own default (Cassandra: .cql; MongoDB: .js/.json), otherwise Flyway's default (.sql) applies.",
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    }
+  ]
+}

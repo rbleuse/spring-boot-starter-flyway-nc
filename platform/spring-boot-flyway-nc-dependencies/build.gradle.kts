@@ -12,7 +12,7 @@ description = """
     via `extra["flyway.version"]` (Spring Boot style).
 """.trimIndent()
 
-val flywayVersion = libs.versions.flyway.get()
+val flywayVersion: String by project
 
 // Flyway NC modules currently managed by this BOM. The runtime engine pieces
 // (verb-migrate, nc-scanners and the verb/nc-core/nc-callbacks they pull in)

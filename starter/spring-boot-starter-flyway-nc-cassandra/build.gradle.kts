@@ -5,10 +5,12 @@ plugins {
 
 description = "Cassandra support for the Spring Boot Flyway native connectors starter"
 
+val flywayVersion: String by project
+
 dependencies {
     api(project(":spring-boot-starter-flyway-nc"))
 
-    compileOnly(libs.flyway.core)
+    compileOnly("org.flywaydb:flyway-core:$flywayVersion")
     compileOnly(platform(libs.springBoot.dependencies))
     compileOnly(libs.springBoot.autoconfigure)
     compileOnly(libs.springBoot.docker.compose)
@@ -16,7 +18,7 @@ dependencies {
     compileOnly(libs.testcontainers.cassandra)
 
     runtimeOnly(platform(libs.springBoot.dependencies))
-    runtimeOnly(libs.flyway.database.nc.cassandra)
+    runtimeOnly("org.flywaydb:flyway-database-nc-cassandra:$flywayVersion")
 
     testImplementation(platform(libs.springBoot.dependencies))
     testImplementation(libs.springBoot.docker.compose)
@@ -24,5 +26,5 @@ dependencies {
     testImplementation(libs.springBoot.testcontainers)
     testImplementation(libs.testcontainers.cassandra)
     testImplementation(libs.testcontainers.junit.jupiter)
-    testImplementation(libs.flyway.database.nc.cassandra)
+    testImplementation("org.flywaydb:flyway-database-nc-cassandra:$flywayVersion")
 }

@@ -1,14 +1,9 @@
 [versions]
-flyway = "12.5.0"
 springBoot = "4.1.0-RC1"
 kotest = "6.1.11"
 kotlin = "2.4.0"
 
 [libraries]
-flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }
-flyway-verb-migrate = { module = "org.flywaydb:flyway-verb-migrate", version.ref = "flyway" }
-flyway-nc-scanners = { module = "org.flywaydb:flyway-nc-scanners", version.ref = "flyway" }
-
 springBoot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
 springBoot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "springBoot" }
 springBoot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor", version.ref = "springBoot" }
@@ -29,7 +24,3 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-allopen = { module = "org.jetbrains.kotlin:kotlin-allopen", version.ref = "kotlin" }
 
-
-# Database dependencies
-flyway-database-nc-cassandra = { module = "org.flywaydb:flyway-database-nc-cassandra", version.ref = "flyway" }
-flyway-database-nc-mongodb = { module = "org.flywaydb:flyway-database-nc-mongodb", version.ref = "flyway" }

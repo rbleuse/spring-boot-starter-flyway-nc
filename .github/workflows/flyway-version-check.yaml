@@ -1,0 +1,96 @@
+name: flyway-version-check
+
+# Scheduled / manual only. Forks cannot trigger these, so the write-scoped token
+# below never runs against fork-supplied code. NEVER add pull_request /
+# pull_request_target, and never actions/checkout a PR ref in this workflow.
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
+        with:
+          distribution: 'zulu'
+          java-version: '25.0.3'
+
+      - name: Compute missing Flyway versions
+        id: missing
+        run: |
+          versions="$(.github/scripts/flyway-missing-versions.sh)"
+          {
+            echo "versions<<EOF"
+            echo "$versions"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          if [ -n "$versions" ]; then
+            echo "has_new=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_new=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate new versions inline
+        id: validate
+        if: steps.missing.outputs.has_new == 'true'
+        run: |
+          chmod +x gradlew
+          table='| Version | Build |'$'\n''|---|---|'
+          while IFS= read -r v; do
+            [ -z "$v" ] && continue
+            if ./gradlew test -PflywayVersion="$v"; then
+              table="${table}"$'\n'"| ${v} | :white_check_mark: pass |"
+            else
+              table="${table}"$'\n'"| ${v} | :x: fail |"
+            fi
+          done <<< "${{ steps.missing.outputs.versions }}"
+          {
+            echo "table<<EOF"
+            echo "$table"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Add versions to the data file
+        if: steps.missing.outputs.has_new == 'true'
+        # Edits the data file (.github/flyway-versions.json), NOT the workflow
+        # file, so the default GITHUB_TOKEN can push the change — it cannot push
+        # edits to .github/workflows/*. jq's default pretty output matches the
+        # seeded format, keeping the PR diff to the added line(s).
+        run: |
+          while IFS= read -r v; do
+            [ -z "$v" ] && continue
+            tmp="$(mktemp)"
+            jq --arg v "$v" '. + [$v]' .github/flyway-versions.json > "$tmp"
+            mv "$tmp" .github/flyway-versions.json
+          done <<< "${{ steps.missing.outputs.versions }}"
+
+      - name: Open / update pull request
+        if: steps.missing.outputs.has_new == 'true'
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
+        with:
+          branch: chore/flyway-versions
+          base: main
+          title: 'ci: add new Flyway version(s) to the compatibility matrix'
+          commit-message: 'ci: add new Flyway version(s) to the compatibility matrix'
+          labels: dependencies
+          body: |
+            Automated by the daily `flyway-version-check` workflow.
+
+            New Flyway version(s) added to `.github/flyway-versions.json` (the
+            source of the CI compatibility matrix).
+
+            Inline build results (PRs opened with `GITHUB_TOKEN` do not trigger the
+            normal CI workflow, so the matrix sweep cannot run on this PR — these
+            results were produced by the cron job instead):
+
+            ${{ steps.validate.outputs.table }}

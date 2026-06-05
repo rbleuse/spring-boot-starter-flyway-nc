@@ -51,4 +51,14 @@ if [ "$out" != "$expected" ]; then
   echo "--- got ---";      printf '%s\n' "$out"
   exit 1
 fi
-echo "PASS"
+echo "PASS (happy path)"
+
+# Regression: a missing workflow file must fail loudly (nonzero exit), NOT emit
+# already-tested versions with exit 0.
+if METADATA_FILE="$tmp/metadata.xml" PROPS="$tmp/gradle.properties" \
+   WORKFLOW="$tmp/does-not-exist.yaml" \
+   bash "$here/flyway-missing-versions.sh" >/dev/null 2>&1; then
+  echo "FAIL: expected nonzero exit when the workflow file is missing"
+  exit 1
+fi
+echo "PASS (missing-workflow guard)"

@@ -1,0 +1,89 @@
+name: flyway-version-check
+
+# Scheduled / manual only. Forks cannot trigger these, so the write-scoped token
+# below never runs against fork-supplied code. NEVER add pull_request /
+# pull_request_target, and never actions/checkout a PR ref in this workflow.
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '25.0.3'
+
+      - name: Compute missing Flyway versions
+        id: missing
+        run: |
+          versions="$(.github/scripts/flyway-missing-versions.sh)"
+          {
+            echo "versions<<EOF"
+            echo "$versions"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+          if [ -n "$versions" ]; then
+            echo "has_new=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_new=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Validate new versions inline
+        id: validate
+        if: steps.missing.outputs.has_new == 'true'
+        run: |
+          chmod +x gradlew
+          table='| Version | Build |'$'\n''|---|---|'
+          while IFS= read -r v; do
+            [ -z "$v" ] && continue
+            if ./gradlew test -PflywayVersion="$v"; then
+              table="${table}"$'\n'"| ${v} | :white_check_mark: pass |"
+            else
+              table="${table}"$'\n'"| ${v} | :x: fail |"
+            fi
+          done <<< "${{ steps.missing.outputs.versions }}"
+          {
+            echo "table<<EOF"
+            echo "$table"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Add versions to the compatibility matrix
+        if: steps.missing.outputs.has_new == 'true'
+        run: |
+          while IFS= read -r v; do
+            [ -z "$v" ] && continue
+            yq -i ".jobs.compatibility.strategy.matrix.flyway += [\"$v\"]" .github/workflows/test.yaml
+          done <<< "${{ steps.missing.outputs.versions }}"
+
+      - name: Open / update pull request
+        if: steps.missing.outputs.has_new == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/flyway-versions
+          base: main
+          title: 'ci: add new Flyway version(s) to the compatibility matrix'
+          commit-message: 'ci: add new Flyway version(s) to the compatibility matrix'
+          labels: dependencies
+          body: |
+            Automated by the daily `flyway-version-check` workflow.
+
+            New Flyway version(s) added to the `compatibility` matrix in `.github/workflows/test.yaml`.
+
+            Inline build results (PRs opened with `GITHUB_TOKEN` do not trigger the
+            normal CI workflow, so the matrix sweep cannot run on this PR — these
+            results were produced by the cron job instead):
+
+            ${{ steps.validate.outputs.table }}

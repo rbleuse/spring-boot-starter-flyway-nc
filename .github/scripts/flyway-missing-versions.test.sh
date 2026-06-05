@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fixture-based test for flyway-missing-versions.sh. No network: METADATA_FILE,
-# PROPS and WORKFLOW are injected.
+# PROPS and VERSIONS_FILE are injected.
 set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 tmp="$(mktemp -d)"
@@ -30,15 +30,11 @@ cat > "$tmp/gradle.properties" <<'PROPS'
 flywayVersion=12.5.0
 PROPS
 
-cat > "$tmp/test.yaml" <<'YAML'
-jobs:
-  compatibility:
-    strategy:
-      matrix:
-        flyway: ['12.6.0', '12.7.0', '12.8.0']
-YAML
+cat > "$tmp/versions.json" <<'JSON'
+["12.6.0", "12.7.0", "12.8.0"]
+JSON
 
-out="$(METADATA_FILE="$tmp/metadata.xml" PROPS="$tmp/gradle.properties" WORKFLOW="$tmp/test.yaml" \
+out="$(METADATA_FILE="$tmp/metadata.xml" PROPS="$tmp/gradle.properties" VERSIONS_FILE="$tmp/versions.json" \
   bash "$here/flyway-missing-versions.sh")"
 
 # Latest patch per NEW minor above highest tested (12.8), incl. new major 13.x;
@@ -53,12 +49,12 @@ if [ "$out" != "$expected" ]; then
 fi
 echo "PASS (happy path)"
 
-# Regression: a missing workflow file must fail loudly (nonzero exit), NOT emit
+# Regression: a missing versions file must fail loudly (nonzero exit), NOT emit
 # already-tested versions with exit 0.
 if METADATA_FILE="$tmp/metadata.xml" PROPS="$tmp/gradle.properties" \
-   WORKFLOW="$tmp/does-not-exist.yaml" \
+   VERSIONS_FILE="$tmp/does-not-exist.json" \
    bash "$here/flyway-missing-versions.sh" >/dev/null 2>&1; then
-  echo "FAIL: expected nonzero exit when the workflow file is missing"
+  echo "FAIL: expected nonzero exit when the versions file is missing"
   exit 1
 fi
-echo "PASS (missing-workflow guard)"
+echo "PASS (missing-versions-file guard)"

@@ -2,16 +2,17 @@
 # Prints, one per line, the Flyway versions that should be added to the CI
 # compatibility matrix: the latest patch of every major.minor strictly greater
 # than the highest currently-tested major.minor (pinned default in
-# gradle.properties UNION the matrix array in the test workflow), up to Flyway's
-# latest release, including new majors. Patch releases of already-tested minors
-# and pre-release versions are ignored. Prints nothing when up to date.
+# gradle.properties UNION the version list in .github/flyway-versions.json), up
+# to Flyway's latest release, including new majors. Patch releases of
+# already-tested minors and pre-release versions are ignored. Prints nothing
+# when up to date.
 #
-# Overridable inputs (for tests): METADATA_FILE, PROPS, WORKFLOW.
+# Overridable inputs (for tests): METADATA_FILE, PROPS, VERSIONS_FILE.
 set -euo pipefail
 
 METADATA_URL="https://repo1.maven.org/maven2/org/flywaydb/flyway-core/maven-metadata.xml"
 PROPS="${PROPS:-gradle.properties}"
-WORKFLOW="${WORKFLOW:-.github/workflows/test.yaml}"
+VERSIONS_FILE="${VERSIONS_FILE:-.github/flyway-versions.json}"
 
 if [ -n "${METADATA_FILE:-}" ]; then
   raw="$(cat "$METADATA_FILE")"
@@ -26,13 +27,13 @@ available="$(printf '%s' "$raw" \
   | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' \
   | sort -V)"
 
-# Tested set = pinned default + compatibility matrix array. Both sources must be
-# readable; a missing/broken workflow file is a hard error (otherwise we would
-# silently propose versions that are already tested). A legitimately empty matrix
-# (path present but no entries) yields empty output and is fine.
-[ -f "$WORKFLOW" ] || { echo "workflow file not found: $WORKFLOW" >&2; exit 1; }
+# Tested set = pinned default + the compatibility version list. Both sources must
+# be readable; a missing/broken versions file is a hard error (otherwise we would
+# silently propose versions that are already tested). A legitimately empty list
+# yields empty output and is fine.
+[ -f "$VERSIONS_FILE" ] || { echo "versions file not found: $VERSIONS_FILE" >&2; exit 1; }
 pinned="$(grep -E '^flywayVersion=' "$PROPS" | head -n1 | cut -d= -f2- | tr -d '[:space:]'"'"'"')"
-matrix="$(yq -r '.jobs.compatibility.strategy.matrix.flyway[]' "$WORKFLOW")"
+matrix="$(jq -r '.[]' "$VERSIONS_FILE")"
 tested="$(printf '%s\n%s\n' "$pinned" "$matrix" | sed '/^$/d')"
 
 # Tested major.minor pairs, and the highest of them.

@@ -6,10 +6,12 @@ plugins {
 
 description = "Spring Boot starter for Flyway native (non-JDBC) connectors"
 
+val flywayVersion: String by project
+
 dependencies {
-    compileOnly(libs.flyway.core)
-    runtimeOnly(libs.flyway.verb.migrate)
-    runtimeOnly(libs.flyway.nc.scanners)
+    compileOnly("org.flywaydb:flyway-core:$flywayVersion")
+    runtimeOnly("org.flywaydb:flyway-verb-migrate:$flywayVersion")
+    runtimeOnly("org.flywaydb:flyway-nc-scanners:$flywayVersion")
 
     compileOnly(libs.springBoot.autoconfigure)
 

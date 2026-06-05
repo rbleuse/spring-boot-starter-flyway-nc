@@ -5,8 +5,11 @@ on:
     branches: [ main ]
   pull_request:
 
+# Least privilege by default. Jobs that run PR-supplied code (test, compatibility)
+# inherit read-only and get no secrets; only the push-only dependency-graph job is
+# granted write. NEVER switch any of these to pull_request_target.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   test:
@@ -16,6 +19,21 @@ jobs:
       - name: 'Dependency Review'
         if: github.event_name == 'pull_request'
         uses: actions/dependency-review-action@v5.0.0
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '25.0.3'
+      - run: chmod +x gradlew && ./gradlew test
+
+  dependency-graph:
+    # Only on push to the base repo (never fork PRs) so the write-scoped token
+    # never runs against PR-supplied code.
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
@@ -31,4 +49,19 @@ jobs:
           # artifact), so its bundled bcprov-jdk18on is not exploitable here. Excluding it keeps
           # build-only deps out of Dependabot alerts (e.g. the FrodoEngine timing-channel CVE).
           DEPENDENCY_GRAPH_EXCLUDE_CONFIGURATIONS: kotlinBouncyCastleConfiguration
-      - run: chmod +x gradlew && ./gradlew test
+
+  compatibility:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Source of truth for the compatibility version list; edited by the
+        # flyway-version-check cron. The pinned default lives in gradle.properties.
+        flyway: ['12.6.0', '12.7.0', '12.8.0']
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'zulu'
+          java-version: '25.0.3'
+      - run: chmod +x gradlew && ./gradlew test -PflywayVersion=${{ matrix.flyway }}

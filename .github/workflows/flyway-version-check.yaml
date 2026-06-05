@@ -60,12 +60,18 @@ jobs:
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Add versions to the compatibility matrix
+      - name: Add versions to the data file
         if: steps.missing.outputs.has_new == 'true'
+        # Edits the data file (.github/flyway-versions.json), NOT the workflow
+        # file, so the default GITHUB_TOKEN can push the change — it cannot push
+        # edits to .github/workflows/*. jq's default pretty output matches the
+        # seeded format, keeping the PR diff to the added line(s).
         run: |
           while IFS= read -r v; do
             [ -z "$v" ] && continue
-            yq -i ".jobs.compatibility.strategy.matrix.flyway += [\"$v\"]" .github/workflows/test.yaml
+            tmp="$(mktemp)"
+            jq --arg v "$v" '. + [$v]' .github/flyway-versions.json > "$tmp"
+            mv "$tmp" .github/flyway-versions.json
           done <<< "${{ steps.missing.outputs.versions }}"
 
       - name: Open / update pull request
@@ -80,7 +86,8 @@ jobs:
           body: |
             Automated by the daily `flyway-version-check` workflow.
 
-            New Flyway version(s) added to the `compatibility` matrix in `.github/workflows/test.yaml`.
+            New Flyway version(s) added to `.github/flyway-versions.json` (the
+            source of the CI compatibility matrix).
 
             Inline build results (PRs opened with `GITHUB_TOKEN` do not trigger the
             normal CI workflow, so the matrix sweep cannot run on this PR — these

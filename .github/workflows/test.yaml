@@ -23,7 +23,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '25.0.3'
-      - run: chmod +x gradlew && ./gradlew test
+      - run: gradlew test
 
   flyway-versions:
     runs-on: ubuntu-latest
@@ -51,7 +51,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '25.0.3'
-      - run: chmod +x gradlew && ./gradlew test -PflywayVersion=${{ matrix.flyway }}
+      - run: gradlew test -PflywayVersion=${{ matrix.flyway }}
 
   test:
     if: always()

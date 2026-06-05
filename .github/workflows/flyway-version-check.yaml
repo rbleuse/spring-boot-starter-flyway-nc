@@ -44,11 +44,10 @@ jobs:
         id: validate
         if: steps.missing.outputs.has_new == 'true'
         run: |
-          chmod +x gradlew
           table='| Version | Build |'$'\n''|---|---|'
           while IFS= read -r v; do
             [ -z "$v" ] && continue
-            if ./gradlew test -PflywayVersion="$v"; then
+            if gradlew test -PflywayVersion="$v"; then
               table="${table}"$'\n'"| ${v} | :white_check_mark: pass |"
             else
               table="${table}"$'\n'"| ${v} | :x: fail |"

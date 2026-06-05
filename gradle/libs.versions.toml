@@ -2,7 +2,7 @@
 flyway = "12.5.0"
 springBoot = "4.1.0-RC1"
 kotest = "6.1.11"
-kotlin = "2.3.21"
+kotlin = "2.4.0"
 
 [libraries]
 flyway-core = { module = "org.flywaydb:flyway-core", version.ref = "flyway" }

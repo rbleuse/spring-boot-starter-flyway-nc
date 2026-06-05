@@ -12,7 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  test:
+  base-version:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
@@ -25,10 +25,50 @@ jobs:
           java-version: '25.0.3'
       - run: chmod +x gradlew && ./gradlew test
 
+  flyway-versions:
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.read.outputs.versions }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - id: read
+        # Reads the compatibility version list (single source of truth, edited by
+        # the flyway-version-check cron) into a JSON matrix value. Kept in a data
+        # file rather than inline in this workflow so the cron can update it with
+        # the default GITHUB_TOKEN, which cannot push changes to .github/workflows/*.
+        run: echo "versions=$(jq -c . .github/flyway-versions.json)" >> "$GITHUB_OUTPUT"
+
+  flyway-version-compatibility:
+    needs: flyway-versions
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        flyway: ${{ fromJSON(needs.flyway-versions.outputs.versions) }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
+        with:
+          distribution: 'zulu'
+          java-version: '25.0.3'
+      - run: chmod +x gradlew && ./gradlew test -PflywayVersion=${{ matrix.flyway }}
+
+  test:
+    if: always()
+    needs: [base-version, flyway-version-compatibility ]
+    runs-on: ubuntu-latest
+    steps:
+      - if: needs.base-version.result != 'success' || needs.flyway-version-compatibility.result != 'success'
+        run: |
+          echo "base-version result: ${{ needs.base-version.result }}"
+          echo "flyway-version-compatibility matrix result: ${{ needs.flyway-version-compatibility.result }}"
+          exit 1
+
   dependency-graph:
     # Only on push to the base repo (never fork PRs) so the write-scoped token
     # never runs against PR-supplied code.
     if: github.event_name == 'push'
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -49,31 +89,3 @@ jobs:
           # artifact), so its bundled bcprov-jdk18on is not exploitable here. Excluding it keeps
           # build-only deps out of Dependabot alerts (e.g. the FrodoEngine timing-channel CVE).
           DEPENDENCY_GRAPH_EXCLUDE_CONFIGURATIONS: kotlinBouncyCastleConfiguration
-
-  flyway-versions:
-    runs-on: ubuntu-latest
-    outputs:
-      versions: ${{ steps.read.outputs.versions }}
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      - id: read
-        # Reads the compatibility version list (single source of truth, edited by
-        # the flyway-version-check cron) into a JSON matrix value. Kept in a data
-        # file rather than inline in this workflow so the cron can update it with
-        # the default GITHUB_TOKEN, which cannot push changes to .github/workflows/*.
-        run: echo "versions=$(jq -c . .github/flyway-versions.json)" >> "$GITHUB_OUTPUT"
-
-  compatibility:
-    needs: flyway-versions
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        flyway: ${{ fromJSON(needs.flyway-versions.outputs.versions) }}
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5
-        with:
-          distribution: 'zulu'
-          java-version: '25.0.3'
-      - run: chmod +x gradlew && ./gradlew test -PflywayVersion=${{ matrix.flyway }}

@@ -23,6 +23,11 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '25.0.3'
+      - name: Show resolved Flyway dependencies
+        run: |
+          ./gradlew :spring-boot-starter-flyway-nc:dependencyInsight \
+            --configuration runtimeClasspath \
+            --dependency org.flywaydb
       - run: ./gradlew test
 
   flyway-versions:
@@ -51,6 +56,12 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '25.0.3'
+      - name: Show resolved Flyway dependencies
+        run: |
+          ./gradlew :spring-boot-starter-flyway-nc:dependencyInsight \
+            --configuration runtimeClasspath \
+            --dependency org.flywaydb \
+            -PflywayVersion=${{ matrix.flyway }}
       - run: ./gradlew test -PflywayVersion=${{ matrix.flyway }}
 
   test:

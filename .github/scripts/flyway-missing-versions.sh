@@ -17,7 +17,7 @@ VERSIONS_FILE="${VERSIONS_FILE:-.github/flyway-versions.json}"
 if [ -n "${METADATA_FILE:-}" ]; then
   raw="$(cat "$METADATA_FILE")"
 else
-  raw="$(curl -fsSL "$METADATA_URL")"
+  raw="$(curl -fsSL --retry 3 --retry-all-errors "$METADATA_URL")"
 fi
 
 # Release versions only (X.Y.Z), ascending.
@@ -37,9 +37,8 @@ matrix="$(jq -r '.[]' "$VERSIONS_FILE")"
 tested="$(printf '%s\n%s\n' "$pinned" "$matrix" | sed '/^$/d')"
 
 # Tested major.minor pairs, and the highest of them.
-# shellcheck disable=SC2086
-tested_minors="$(printf '%s\n' $tested | awk -F. '{print $1"."$2}' | sort -u)"
-highest="$(printf '%s\n' $tested_minors | sort -t. -k1,1n -k2,2n | tail -n1)"
+tested_minors="$(printf '%s\n' "$tested" | awk -F. '{print $1"."$2}' | sort -u)"
+highest="$(printf '%s\n' "$tested_minors" | sort -t. -k1,1n -k2,2n | tail -n1)"
 highest_major="${highest%%.*}"
 highest_minor="${highest#*.}"
 
@@ -50,7 +49,5 @@ for mm in $(printf '%s\n' "$available" | awk -F. '{print $1"."$2}' | sort -u -t.
   major="${mm%%.*}"; minor="${mm#*.}"
   if (( major < highest_major )); then continue; fi
   if (( major == highest_major && minor <= highest_minor )); then continue; fi
-  # shellcheck disable=SC2086
-  if printf '%s\n' $tested_minors | grep -qx "$mm"; then continue; fi
-  printf '%s\n' "$available" | grep -E "^${major}\.${minor}\." | sort -V | tail -n1
+  printf '%s\n' "$available" | grep -E "^${major}\.${minor}\." | tail -n1
 done

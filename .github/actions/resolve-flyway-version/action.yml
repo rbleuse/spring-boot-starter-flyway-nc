@@ -20,6 +20,7 @@ runs:
       shell: bash
       env:
         FLYWAY_VERSION: ${{ inputs.flyway-version }}
+        VERSION_PARSER: ${{ github.action_path }}/parse-version.awk
       run: |
         gradle_args=()
         if [[ -n "$FLYWAY_VERSION" ]]; then
@@ -33,7 +34,7 @@ runs:
             --console=plain \
             --quiet \
             "${gradle_args[@]}" |
-            awk 'NR == 1 { version = $1; if ($(NF - 1) == "->") version = $NF; sub(/^org\.flywaydb:flyway-core:/, "", version); print version }'
+            awk -f "$VERSION_PARSER"
         )"
         test -n "$version"
         echo "version=$version" >> "$GITHUB_OUTPUT"

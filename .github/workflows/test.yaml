@@ -25,17 +25,7 @@ jobs:
           java-version: '25.0.3'
       - name: Resolve Flyway version
         id: flyway_version
-        run: |
-          version="$(
-            ./gradlew :spring-boot-starter-flyway-nc:dependencyInsight \
-              --configuration runtimeClasspath \
-              --dependency org.flywaydb:flyway-core \
-              --console=plain \
-              --quiet |
-              awk 'NR == 1 { version = $1; if ($(NF - 1) == "->") version = $NF; sub(/^org\.flywaydb:flyway-core:/, "", version); print version }'
-          )"
-          test -n "$version"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/resolve-flyway-version
       - name: Test with Flyway ${{ steps.flyway_version.outputs.version }}
         run: ./gradlew test
 
@@ -67,18 +57,9 @@ jobs:
           java-version: '25.0.3'
       - name: Resolve Flyway version
         id: flyway_version
-        run: |
-          version="$(
-            ./gradlew :spring-boot-starter-flyway-nc:dependencyInsight \
-              --configuration runtimeClasspath \
-              --dependency org.flywaydb:flyway-core \
-              --console=plain \
-              --quiet \
-              -PflywayVersion=${{ matrix.flyway }} |
-              awk 'NR == 1 { version = $1; if ($(NF - 1) == "->") version = $NF; sub(/^org\.flywaydb:flyway-core:/, "", version); print version }'
-          )"
-          test -n "$version"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+        uses: ./.github/actions/resolve-flyway-version
+        with:
+          flyway-version: ${{ matrix.flyway }}
       - name: Test with Flyway ${{ steps.flyway_version.outputs.version }}
         run: ./gradlew test -PflywayVersion=${{ matrix.flyway }}
 

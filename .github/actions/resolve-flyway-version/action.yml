@@ -1,0 +1,39 @@
+name: Resolve Flyway version
+description: Resolve the Flyway Core version from the starter runtime classpath
+
+inputs:
+  flyway-version:
+    description: Optional Flyway version override passed to Gradle
+    required: false
+    default: ''
+
+outputs:
+  version:
+    description: Resolved Flyway Core version
+    value: ${{ steps.resolve.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve version
+      id: resolve
+      shell: bash
+      env:
+        FLYWAY_VERSION: ${{ inputs.flyway-version }}
+      run: |
+        gradle_args=()
+        if [[ -n "$FLYWAY_VERSION" ]]; then
+          gradle_args+=("-PflywayVersion=$FLYWAY_VERSION")
+        fi
+
+        version="$(
+          ./gradlew :spring-boot-starter-flyway-nc:dependencyInsight \
+            --configuration runtimeClasspath \
+            --dependency org.flywaydb:flyway-core \
+            --console=plain \
+            --quiet \
+            "${gradle_args[@]}" |
+            awk 'NR == 1 { version = $1; if ($(NF - 1) == "->") version = $NF; sub(/^org\.flywaydb:flyway-core:/, "", version); print version }'
+        )"
+        test -n "$version"
+        echo "version=$version" >> "$GITHUB_OUTPUT"

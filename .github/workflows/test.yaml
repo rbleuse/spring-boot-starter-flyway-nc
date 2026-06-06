@@ -23,12 +23,21 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '25.0.3'
-      - name: Show resolved Flyway dependencies
+      - name: Resolve Flyway version
+        id: flyway_version
         run: |
-          ./gradlew :spring-boot-starter-flyway-nc:dependencyInsight \
-            --configuration runtimeClasspath \
-            --dependency org.flywaydb
-      - run: ./gradlew test
+          version="$(
+            ./gradlew :spring-boot-starter-flyway-nc:dependencyInsight \
+              --configuration runtimeClasspath \
+              --dependency org.flywaydb:flyway-core \
+              --console=plain \
+              --quiet |
+              awk 'NR == 1 { version = $1; if ($(NF - 1) == "->") version = $NF; sub(/^org\.flywaydb:flyway-core:/, "", version); print version }'
+          )"
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Test with Flyway ${{ steps.flyway_version.outputs.version }}
+        run: ./gradlew test
 
   flyway-versions:
     runs-on: ubuntu-latest
@@ -56,13 +65,22 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '25.0.3'
-      - name: Show resolved Flyway dependencies
+      - name: Resolve Flyway version
+        id: flyway_version
         run: |
-          ./gradlew :spring-boot-starter-flyway-nc:dependencyInsight \
-            --configuration runtimeClasspath \
-            --dependency org.flywaydb \
-            -PflywayVersion=${{ matrix.flyway }}
-      - run: ./gradlew test -PflywayVersion=${{ matrix.flyway }}
+          version="$(
+            ./gradlew :spring-boot-starter-flyway-nc:dependencyInsight \
+              --configuration runtimeClasspath \
+              --dependency org.flywaydb:flyway-core \
+              --console=plain \
+              --quiet \
+              -PflywayVersion=${{ matrix.flyway }} |
+              awk 'NR == 1 { version = $1; if ($(NF - 1) == "->") version = $NF; sub(/^org\.flywaydb:flyway-core:/, "", version); print version }'
+          )"
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Test with Flyway ${{ steps.flyway_version.outputs.version }}
+        run: ./gradlew test -PflywayVersion=${{ matrix.flyway }}
 
   test:
     if: always()

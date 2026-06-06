@@ -20,7 +20,7 @@ kotlin {
 
     compilerOptions {
         jvmTarget = JvmTarget.JVM_17
-        freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
+        freeCompilerArgs.add("-Xjsr305=strict")
     }
 }
 

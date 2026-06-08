@@ -5,6 +5,7 @@ plugins {
     kotlin("jvm")
     kotlin("plugin.spring")
     `java-library`
+    id("org.jmailen.kotlinter")
 }
 
 val libs = the<LibrariesForLibs>()

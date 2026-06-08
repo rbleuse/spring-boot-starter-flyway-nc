@@ -27,7 +27,7 @@ jobs:
         id: flyway_version
         uses: ./.github/actions/resolve-flyway-version
       - name: Test with Flyway ${{ steps.flyway_version.outputs.version }}
-        run: ./gradlew test
+        run: ./gradlew lintKotlin test
 
   flyway-versions:
     runs-on: ubuntu-latest

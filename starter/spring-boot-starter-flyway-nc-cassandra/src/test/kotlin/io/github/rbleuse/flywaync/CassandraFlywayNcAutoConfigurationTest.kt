@@ -11,21 +11,23 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
 class CassandraFlywayNcAutoConfigurationTest {
-
-    private val contextRunner = ApplicationContextRunner()
-        .withConfiguration(
-            AutoConfigurations.of(
-                CassandraFlywayNcAutoConfiguration::class.java,
-                FlywayNcAutoConfiguration::class.java,
-            ),
-        )
-        .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
-        .withPropertyValues("spring.flyway-nc.url=cassandra://localhost:9042/test?localdatacenter=dc1")
+    private val contextRunner =
+        ApplicationContextRunner()
+            .withConfiguration(
+                AutoConfigurations.of(
+                    CassandraFlywayNcAutoConfiguration::class.java,
+                    FlywayNcAutoConfiguration::class.java,
+                ),
+            ).withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
+            .withPropertyValues("spring.flyway-nc.url=cassandra://localhost:9042/test?localdatacenter=dc1")
 
     @Test
     fun `defaults sqlMigrationSuffixes to cql when none configured`() {
         contextRunner.run { context ->
-            context.getBean<Flyway>().configuration.sqlMigrationSuffixes.toList() shouldBe listOf(".cql")
+            context
+                .getBean<Flyway>()
+                .configuration.sqlMigrationSuffixes
+                .toList() shouldBe listOf(".cql")
         }
     }
 
@@ -34,7 +36,10 @@ class CassandraFlywayNcAutoConfigurationTest {
         contextRunner
             .withPropertyValues("spring.flyway-nc.migration-suffixes[0]=.cassandra")
             .run { context ->
-                context.getBean<Flyway>().configuration.sqlMigrationSuffixes.toList() shouldBe listOf(".cassandra")
+                context
+                    .getBean<Flyway>()
+                    .configuration.sqlMigrationSuffixes
+                    .toList() shouldBe listOf(".cassandra")
             }
     }
 

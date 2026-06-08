@@ -31,10 +31,11 @@ internal class CassandraFlywayNcDockerComposeConnectionDetailsFactory :
             append("?localdatacenter=").append(environment.localDatacenter.urlEncode())
         }
 
-    private fun String.urlEncode(): String =
-        URLEncoder.encode(this, StandardCharsets.UTF_8)
+    private fun String.urlEncode(): String = URLEncoder.encode(this, StandardCharsets.UTF_8)
 
-    private class CassandraEnvironment(env: Map<String, String?>) {
+    private class CassandraEnvironment(
+        env: Map<String, String?>,
+    ) {
         val localDatacenter: String = env["CASSANDRA_DC"] ?: env["CASSANDRA_DATACENTER"] ?: CASSANDRA_DEFAULT_DATACENTER
         val keyspace: String? = env["CASSANDRA_KEYSPACE"]
         val user: String? = env["CASSANDRA_USER"] ?: env["CASSANDRA_USERNAME"]

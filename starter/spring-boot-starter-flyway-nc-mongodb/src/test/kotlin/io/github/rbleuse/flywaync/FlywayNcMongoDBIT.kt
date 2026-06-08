@@ -24,9 +24,10 @@ class FlywayNcMongoDBIT {
         private const val DATABASE = "flyway_nc_it"
 
         @ServiceConnection
-        val mongo: MongoDBContainer = MongoDBContainer(
-            DockerImageName.parse("mongo:8.0.21")
-        )
+        val mongo: MongoDBContainer =
+            MongoDBContainer(
+                DockerImageName.parse("mongo:8.0.21"),
+            )
     }
 
     @Test
@@ -38,10 +39,12 @@ class FlywayNcMongoDBIT {
             collections shouldContain "flyway_nc_it_collection"
             collections shouldContain "flyway_schema_history"
 
-            val historyVersions = database.getCollection("flyway_schema_history")
-                .find()
-                .toList()
-                .mapNotNull { it.getString("version") }
+            val historyVersions =
+                database
+                    .getCollection("flyway_schema_history")
+                    .find()
+                    .toList()
+                    .mapNotNull { it.getString("version") }
             historyVersions shouldBe listOf("1")
         }
     }

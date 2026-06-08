@@ -4,6 +4,7 @@ import org.gradle.api.tasks.testing.TestReport
 plugins {
     base
     `test-report-aggregation`
+    id("org.jetbrains.kotlinx.kover")
 }
 
 group = "io.github.rbleuse"
@@ -20,10 +21,36 @@ allprojects {
     }
 }
 
+val coverageProjectPaths = listOf(
+    ":spring-boot-starter-flyway-nc",
+    ":spring-boot-starter-flyway-nc-cassandra",
+    ":spring-boot-starter-flyway-nc-mongodb",
+)
+
 dependencies {
-    testReportAggregation(project(":spring-boot-starter-flyway-nc"))
-    testReportAggregation(project(":spring-boot-starter-flyway-nc-cassandra"))
-    testReportAggregation(project(":spring-boot-starter-flyway-nc-mongodb"))
+    coverageProjectPaths.forEach { testReportAggregation(project(it)) }
+}
+
+kover {
+    useJacoco(libs.versions.jacoco.get())
+
+    merge {
+        projects(*coverageProjectPaths.toTypedArray())
+    }
+
+    reports {
+        total {
+            html {
+                onCheck = true
+            }
+        }
+
+        verify {
+            rule {
+                minBound(80)
+            }
+        }
+    }
 }
 
 reporting {
@@ -36,4 +63,5 @@ reporting {
 
 tasks.check {
     dependsOn(tasks.named<TestReport>("testAggregateTestReport"))
+    dependsOn(tasks.named("koverVerify"))
 }

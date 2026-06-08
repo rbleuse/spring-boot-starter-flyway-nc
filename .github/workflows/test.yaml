@@ -23,10 +23,10 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '25.0.3'
-      - name: Resolve Flyway version
+      - name: Read configured Flyway version
         id: flyway_version
         uses: ./.github/actions/resolve-flyway-version
-      - name: Test with Flyway ${{ steps.flyway_version.outputs.version }}
+      - name: Test with configured Flyway ${{ steps.flyway_version.outputs.version }}
         run: ./gradlew lintKotlin test
 
   flyway-versions:
@@ -55,12 +55,12 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '25.0.3'
-      - name: Resolve Flyway version
+      - name: Read configured Flyway version
         id: flyway_version
         uses: ./.github/actions/resolve-flyway-version
         with:
           flyway-version: ${{ matrix.flyway }}
-      - name: Test with Flyway ${{ steps.flyway_version.outputs.version }}
+      - name: Test with configured Flyway ${{ steps.flyway_version.outputs.version }}
         run: ./gradlew test -PflywayVersion=${{ matrix.flyway }}
 
   test:

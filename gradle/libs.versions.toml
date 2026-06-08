@@ -3,6 +3,8 @@ springBoot = "4.1.0-RC1"
 kotest = "6.1.11"
 kotlin = "2.4.0"
 kotlinter = "5.5.0"
+kover = "0.9.8"
+jacoco = "0.8.15"
 
 [libraries]
 springBoot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
@@ -25,4 +27,5 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlin-allopen = { module = "org.jetbrains.kotlin:kotlin-allopen", version.ref = "kotlin" }
 kotlinter-gradle-plugin = { module = "org.jmailen.gradle:kotlinter-gradle", version.ref = "kotlinter" }
-
+kover-gradle-plugin = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.ref = "kover" }
+jacoco-core = { module = "org.jacoco:org.jacoco.core", version.ref = "jacoco" }

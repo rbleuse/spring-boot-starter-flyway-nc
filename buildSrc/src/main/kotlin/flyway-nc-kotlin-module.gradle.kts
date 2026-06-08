@@ -32,6 +32,12 @@ tasks.withType<JavaCompile>().configureEach {
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
     environment("FLYWAY_NATIVE_CONNECTORS", "true")
+    // Surface skipped tests on the console. The Testcontainers ITs carry
+    // @Testcontainers(disabledWithoutDocker = true), so when Docker is absent they
+    // are skipped rather than failing — this makes that visible instead of silent.
+    testLogging {
+        events("skipped")
+    }
 }
 
 dependencies {

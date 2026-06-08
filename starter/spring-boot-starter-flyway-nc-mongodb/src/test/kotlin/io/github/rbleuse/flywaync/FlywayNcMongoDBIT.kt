@@ -8,6 +8,7 @@ import org.springframework.boot.SpringBootConfiguration
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection
+import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.mongodb.MongoDBContainer
 import org.testcontainers.utility.DockerImageName
 
@@ -19,6 +20,7 @@ import org.testcontainers.utility.DockerImageName
 )
 @SpringBootConfiguration
 @EnableAutoConfiguration
+@Testcontainers(disabledWithoutDocker = true)
 class FlywayNcMongoDBIT {
     companion object {
         private const val DATABASE = "flyway_nc_it"

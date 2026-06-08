@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection
 import org.testcontainers.cassandra.CassandraContainer
+import org.testcontainers.junit.jupiter.Testcontainers
 import org.testcontainers.utility.DockerImageName
 import java.net.InetSocketAddress
 
@@ -21,6 +22,7 @@ import java.net.InetSocketAddress
 )
 @SpringBootConfiguration
 @EnableAutoConfiguration
+@Testcontainers(disabledWithoutDocker = true)
 class FlywayNcCassandraIT {
     companion object {
         private const val KEYSPACE = "flyway_nc_it"

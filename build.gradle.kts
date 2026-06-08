@@ -1,11 +1,10 @@
 import org.gradle.api.tasks.testing.AggregateTestReport
 import org.gradle.api.tasks.testing.TestReport
-import kotlinx.kover.gradle.plugin.dsl.KoverProjectExtension
 
 plugins {
     base
     `test-report-aggregation`
-    id("org.jetbrains.kotlinx.kover") version "0.9.8"
+    id("org.jetbrains.kotlinx.kover")
 }
 
 group = "io.github.rbleuse"
@@ -22,30 +21,18 @@ allprojects {
     }
 }
 
-dependencies {
-    testReportAggregation(project(":spring-boot-starter-flyway-nc"))
-    testReportAggregation(project(":spring-boot-starter-flyway-nc-cassandra"))
-    testReportAggregation(project(":spring-boot-starter-flyway-nc-mongodb"))
-}
-
 val coverageProjectPaths = listOf(
     ":spring-boot-starter-flyway-nc",
     ":spring-boot-starter-flyway-nc-cassandra",
     ":spring-boot-starter-flyway-nc-mongodb",
 )
 
-subprojects {
-    if (path in coverageProjectPaths) {
-        pluginManager.apply("org.jetbrains.kotlinx.kover")
-
-        extensions.configure<KoverProjectExtension>("kover") {
-            useJacoco("0.8.15")
-        }
-    }
+dependencies {
+    coverageProjectPaths.forEach { testReportAggregation(project(it)) }
 }
 
 kover {
-    useJacoco("0.8.15")
+    useJacoco(libs.versions.jacoco.get())
 
     merge {
         projects(*coverageProjectPaths.toTypedArray())
@@ -76,6 +63,5 @@ reporting {
 
 tasks.check {
     dependsOn(tasks.named<TestReport>("testAggregateTestReport"))
-    dependsOn(tasks.named("koverHtmlReport"))
     dependsOn(tasks.named("koverVerify"))
 }

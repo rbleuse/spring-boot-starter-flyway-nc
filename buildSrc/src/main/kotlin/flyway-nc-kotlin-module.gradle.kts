@@ -6,9 +6,14 @@ plugins {
     kotlin("plugin.spring")
     `java-library`
     id("org.jmailen.kotlinter")
+    id("org.jetbrains.kotlinx.kover")
 }
 
 val libs = the<LibrariesForLibs>()
+
+kover {
+    useJacoco(libs.versions.jacoco.get())
+}
 
 java {
     toolchain {

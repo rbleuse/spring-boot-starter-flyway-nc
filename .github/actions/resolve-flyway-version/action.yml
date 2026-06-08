@@ -1,5 +1,5 @@
 name: Resolve Flyway version
-description: Resolve the Flyway Core version from the starter runtime classpath
+description: Select the Flyway version configured for the build
 
 inputs:
   flyway-version:
@@ -9,7 +9,7 @@ inputs:
 
 outputs:
   version:
-    description: Resolved Flyway Core version
+    description: Flyway version configured for the build
     value: ${{ steps.resolve.outputs.version }}
 
 runs:
@@ -20,21 +20,8 @@ runs:
       shell: bash
       env:
         FLYWAY_VERSION: ${{ inputs.flyway-version }}
-        VERSION_PARSER: ${{ github.action_path }}/parse-version.awk
+        VERSION_RESOLVER: ${{ github.action_path }}/resolve-version.sh
+        PROPERTIES_FILE: ${{ github.workspace }}/gradle.properties
       run: |
-        gradle_args=()
-        if [[ -n "$FLYWAY_VERSION" ]]; then
-          gradle_args+=("-PflywayVersion=$FLYWAY_VERSION")
-        fi
-
-        version="$(
-          ./gradlew :spring-boot-starter-flyway-nc:dependencyInsight \
-            --configuration runtimeClasspath \
-            --dependency org.flywaydb:flyway-core \
-            --console=plain \
-            --quiet \
-            "${gradle_args[@]}" |
-            awk -f "$VERSION_PARSER"
-        )"
-        test -n "$version"
+        version="$(bash "$VERSION_RESOLVER" "$FLYWAY_VERSION" "$PROPERTIES_FILE")"
         echo "version=$version" >> "$GITHUB_OUTPUT"

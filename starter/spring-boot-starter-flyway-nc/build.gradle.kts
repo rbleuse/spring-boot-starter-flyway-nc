@@ -1,3 +1,8 @@
+import org.gradle.api.NamedDomainObjectProvider
+import org.gradle.api.Task
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.tasks.TaskProvider
+
 plugins {
     `flyway-nc-kotlin-module`
     `flyway-nc-publishing`
@@ -20,6 +25,42 @@ dependencies {
 
     testImplementation(platform(libs.springBoot.dependencies))
     testImplementation(libs.springBoot.starter.test)
+}
+
+val runtimeClasspath: NamedDomainObjectProvider<Configuration> = configurations.named("runtimeClasspath")
+
+val verifyFlywayVersion: TaskProvider<Task> = tasks.register("verifyFlywayVersion") {
+    group = "verification"
+    description = "Verifies that the resolved Flyway Core version matches flywayVersion"
+
+    doLast {
+        val resolvedVersions = runtimeClasspath
+            .get()
+            .incoming
+            .resolutionResult
+            .allComponents
+            .mapNotNull { component ->
+                component.moduleVersion
+                    ?.takeIf { it.group == "org.flywaydb" && it.name == "flyway-core" }
+                    ?.version
+            }
+            .distinct()
+
+        check(resolvedVersions.size == 1) {
+            "Expected exactly one resolved org.flywaydb:flyway-core version, found $resolvedVersions"
+        }
+
+        val resolvedVersion = resolvedVersions.single()
+        check(resolvedVersion == flywayVersion) {
+            "Configured Flyway version is $flywayVersion, but org.flywaydb:flyway-core resolved to $resolvedVersion"
+        }
+
+        logger.lifecycle("Verified resolved Flyway Core version: $resolvedVersion")
+    }
+}
+
+tasks.named("test") {
+    dependsOn(verifyFlywayVersion)
 }
 
 kapt {

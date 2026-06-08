@@ -7,15 +7,13 @@ import org.testcontainers.mongodb.MongoDBContainer
 
 internal class MongoDBContainerFlywayNcConnectionDetailsFactory :
     ContainerConnectionDetailsFactory<MongoDBContainer, FlywayNcConnectionDetails>() {
-
-    override fun getContainerConnectionDetails(
-        source: ContainerConnectionSource<MongoDBContainer>,
-    ): FlywayNcConnectionDetails =
+    override fun getContainerConnectionDetails(source: ContainerConnectionSource<MongoDBContainer>): FlywayNcConnectionDetails =
         MongoDBContainerFlywayNcConnectionDetails(source)
 
     private class MongoDBContainerFlywayNcConnectionDetails(
         source: ContainerConnectionSource<MongoDBContainer>,
-    ) : ContainerConnectionDetails<MongoDBContainer>(source), FlywayNcConnectionDetails {
+    ) : ContainerConnectionDetails<MongoDBContainer>(source),
+        FlywayNcConnectionDetails {
         override val url: String
             get() = container.connectionString
 

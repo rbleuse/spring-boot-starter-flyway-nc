@@ -34,18 +34,21 @@ class FlywayNcAutoConfiguration {
         connectionDetailsProvider: ObjectProvider<FlywayNcConnectionDetails>,
         customizers: ObjectProvider<FlywayConfigurationCustomizer>,
     ): Flyway {
-        val connectionDetails = connectionDetailsProvider.ifAvailable
-            ?: error(
-                "No FlywayNcConnectionDetails available. Configure 'spring.flyway-nc.url', " +
-                    "register a service connection (Docker Compose or Testcontainers @ServiceConnection), " +
-                    "or declare a FlywayNcConnectionDetails bean.",
-            )
+        val connectionDetails =
+            connectionDetailsProvider.ifAvailable
+                ?: error(
+                    "No FlywayNcConnectionDetails available. Configure 'spring.flyway-nc.url', " +
+                        "register a service connection (Docker Compose or Testcontainers @ServiceConnection), " +
+                        "or declare a FlywayNcConnectionDetails bean.",
+                )
         val rawUrl = connectionDetails.url
         val urlCarriesSchema = rawUrl.hasSchemaInPath()
         val resolvedUrl = if (urlCarriesSchema) rawUrl else rawUrl.withSchemaIfMissing(props.defaultSchema)
-        val config = Flyway.configure()
-            .dataSource(resolvedUrl, connectionDetails.user, connectionDetails.password)
-            .locations(*props.locations.toTypedArray())
+        val config =
+            Flyway
+                .configure()
+                .dataSource(resolvedUrl, connectionDetails.user, connectionDetails.password)
+                .locations(*props.locations.toTypedArray())
         if (props.migrationSuffixes.isNotEmpty()) {
             config.sqlMigrationSuffixes(*props.migrationSuffixes.toTypedArray())
         }
@@ -63,8 +66,7 @@ class FlywayNcAutoConfiguration {
     fun flywayInitializer(
         flyway: Flyway,
         strategy: ObjectProvider<FlywayNcMigrationStrategy>,
-    ): FlywayNcMigrationInitializer =
-        FlywayNcMigrationInitializer(flyway, strategy.ifAvailable)
+    ): FlywayNcMigrationInitializer = FlywayNcMigrationInitializer(flyway, strategy.ifAvailable)
 
     private fun String.hasSchemaInPath(): Boolean {
         val schemeSep = this.indexOf("://")

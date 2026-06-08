@@ -30,10 +30,11 @@ internal class MongoDBFlywayNcDockerComposeConnectionDetailsFactory :
             if (environment.user != null) append("?authSource=admin")
         }
 
-    private fun String.urlEncode(): String =
-        URLEncoder.encode(this, StandardCharsets.UTF_8)
+    private fun String.urlEncode(): String = URLEncoder.encode(this, StandardCharsets.UTF_8)
 
-    private class MongoDBEnvironment(env: Map<String, String?>) {
+    private class MongoDBEnvironment(
+        env: Map<String, String?>,
+    ) {
         val database: String? = env["MONGO_INITDB_DATABASE"]
         val user: String? = env["MONGO_INITDB_ROOT_USERNAME"]
         val password: String? = env["MONGO_INITDB_ROOT_PASSWORD"]

@@ -26,9 +26,10 @@ class FlywayNcCassandraIT {
         private const val KEYSPACE = "flyway_nc_it"
 
         @ServiceConnection
-        val cassandra: CassandraContainer = CassandraContainer(
-            DockerImageName.parse("cassandra:5.0")
-        ).withInitScript("cassandra-init.cql")
+        val cassandra: CassandraContainer =
+            CassandraContainer(
+                DockerImageName.parse("cassandra:5.0"),
+            ).withInitScript("cassandra-init.cql")
     }
 
     @Test
@@ -37,23 +38,30 @@ class FlywayNcCassandraIT {
         val port = cassandra.contactPoint.port
         val dc = cassandra.localDatacenter
 
-        CqlSession.builder()
+        CqlSession
+            .builder()
             .addContactPoint(InetSocketAddress(host, port))
             .withLocalDatacenter(dc)
             .withKeyspace(KEYSPACE)
             .build()
             .use { session ->
-                val tables = session.execute(
-                    "SELECT table_name FROM system_schema.tables WHERE keyspace_name = ?",
-                    KEYSPACE,
-                ).all().map { it.getString("table_name") }
+                val tables =
+                    session
+                        .execute(
+                            "SELECT table_name FROM system_schema.tables WHERE keyspace_name = ?",
+                            KEYSPACE,
+                        ).all()
+                        .map { it.getString("table_name") }
 
                 tables shouldContain "flyway_nc_it_table"
                 tables shouldContain "flyway_schema_history"
 
-                val historyVersions = session.execute(
-                    "SELECT version FROM flyway_schema_history",
-                ).all().map { it.getString("version") }
+                val historyVersions =
+                    session
+                        .execute(
+                            "SELECT version FROM flyway_schema_history",
+                        ).all()
+                        .map { it.getString("version") }
                 historyVersions shouldBe listOf("1")
             }
     }

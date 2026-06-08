@@ -19,7 +19,6 @@ import org.springframework.core.annotation.Order
 @ConditionalOnBooleanProperty(name = ["spring.flyway-nc.enabled"], matchIfMissing = true)
 @EnableConfigurationProperties(FlywayNcProperties::class)
 class CassandraFlywayNcAutoConfiguration {
-
     /**
      * Cassandra's Flyway NC engine only executes `.cql` migrations, but Flyway's built-in default
      * suffix is `.sql`. Default it to `.cql` so consumers don't have to repeat the configuration.

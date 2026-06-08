@@ -7,15 +7,13 @@ import org.testcontainers.cassandra.CassandraContainer
 
 internal class CassandraContainerFlywayNcConnectionDetailsFactory :
     ContainerConnectionDetailsFactory<CassandraContainer, FlywayNcConnectionDetails>() {
-
-    override fun getContainerConnectionDetails(
-        source: ContainerConnectionSource<CassandraContainer>,
-    ): FlywayNcConnectionDetails =
+    override fun getContainerConnectionDetails(source: ContainerConnectionSource<CassandraContainer>): FlywayNcConnectionDetails =
         CassandraContainerFlywayNcConnectionDetails(source)
 
     private class CassandraContainerFlywayNcConnectionDetails(
         source: ContainerConnectionSource<CassandraContainer>,
-    ) : ContainerConnectionDetails<CassandraContainer>(source), FlywayNcConnectionDetails {
+    ) : ContainerConnectionDetails<CassandraContainer>(source),
+        FlywayNcConnectionDetails {
         override val url: String
             get() {
                 val contactPoint = container.contactPoint

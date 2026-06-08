@@ -12,11 +12,11 @@ import org.springframework.context.annotation.Configuration
 import java.util.concurrent.atomic.AtomicInteger
 
 class FlywayNcAutoConfigurationTest {
-
-    private val contextRunner = ApplicationContextRunner()
-        .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
-        .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
-        .withPropertyValues("spring.flyway-nc.url=cassandra://localhost:9042/test?localdatacenter=dc1")
+    private val contextRunner =
+        ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
+            .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
+            .withPropertyValues("spring.flyway-nc.url=cassandra://localhost:9042/test?localdatacenter=dc1")
 
     @Test
     fun `creates Flyway and initializer beans by default`() {
@@ -40,9 +40,11 @@ class FlywayNcAutoConfigurationTest {
 
     @Test
     fun `user-defined Flyway bean overrides autoconfig bean`() {
-        val userFlyway = Flyway.configure()
-            .dataSource("cassandra://localhost:9042/other?localdatacenter=dc1", null, null)
-            .load()
+        val userFlyway =
+            Flyway
+                .configure()
+                .dataSource("cassandra://localhost:9042/other?localdatacenter=dc1", null, null)
+                .load()
         contextRunner
             .withBean(Flyway::class.java, { userFlyway })
             .run { context ->
@@ -64,8 +66,7 @@ class FlywayNcAutoConfigurationTest {
                         override val password: String = "compose-password"
                     }
                 },
-            )
-            .run { context ->
+            ).run { context ->
                 val configuration = context.getBean<Flyway>().configuration
                 configuration.url shouldBe
                     "cassandra://compose-host:19042/compose_keyspace?localdatacenter=compose-dc"
@@ -82,8 +83,7 @@ class FlywayNcAutoConfigurationTest {
             .withPropertyValues(
                 "spring.flyway-nc.url=cassandra://localhost:9042?localdatacenter=dc1",
                 "spring.flyway-nc.default-schema=my keyspace",
-            )
-            .run { context ->
+            ).run { context ->
                 context.getBean<Flyway>().configuration.url shouldBe
                     "cassandra://localhost:9042/my%20keyspace?localdatacenter=dc1"
             }
@@ -97,8 +97,7 @@ class FlywayNcAutoConfigurationTest {
             .withPropertyValues(
                 "spring.flyway-nc.url=cassandra://localhost:9042/explicit_ks?localdatacenter=dc1",
                 "spring.flyway-nc.default-schema=ignored_ks",
-            )
-            .run { context ->
+            ).run { context ->
                 val configuration = context.getBean<Flyway>().configuration
                 configuration.url shouldBe "cassandra://localhost:9042/explicit_ks?localdatacenter=dc1"
                 configuration.defaultSchema shouldBe null
@@ -113,9 +112,10 @@ class FlywayNcAutoConfigurationTest {
             .run { context ->
                 val failure = context.startupFailure
                 failure shouldNotBe null
-                val messages = generateSequence<Throwable>(failure) { it.cause }
-                    .mapNotNull { it.message }
-                    .toList()
+                val messages =
+                    generateSequence<Throwable>(failure) { it.cause }
+                        .mapNotNull { it.message }
+                        .toList()
                 messages.any {
                     it.contains("spring.flyway-nc.url") && it.contains("service connection", ignoreCase = true)
                 } shouldBe true
@@ -128,9 +128,8 @@ class FlywayNcAutoConfigurationTest {
         contextRunner
             .withBean(
                 FlywayConfigurationCustomizer::class.java,
-                { FlywayConfigurationCustomizer { callCount.incrementAndGet() } }
-            )
-            .run { context ->
+                { FlywayConfigurationCustomizer { callCount.incrementAndGet() } },
+            ).run { context ->
                 context.getBean<Flyway>()
                 callCount.get() shouldBe 1
             }

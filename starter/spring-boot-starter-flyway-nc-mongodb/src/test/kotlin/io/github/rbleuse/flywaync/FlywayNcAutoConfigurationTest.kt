@@ -11,11 +11,11 @@ import org.springframework.context.annotation.Configuration
 import java.util.concurrent.atomic.AtomicInteger
 
 class FlywayNcAutoConfigurationTest {
-
-    private val contextRunner = ApplicationContextRunner()
-        .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
-        .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
-        .withPropertyValues("spring.flyway-nc.url=mongodb://localhost:27017/test")
+    private val contextRunner =
+        ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
+            .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
+            .withPropertyValues("spring.flyway-nc.url=mongodb://localhost:27017/test")
 
     @Test
     fun `creates Flyway and initializer beans by default`() {
@@ -39,9 +39,11 @@ class FlywayNcAutoConfigurationTest {
 
     @Test
     fun `user-defined Flyway bean overrides autoconfig bean`() {
-        val userFlyway = Flyway.configure()
-            .dataSource("mongodb://localhost:27017/other", null, null)
-            .load()
+        val userFlyway =
+            Flyway
+                .configure()
+                .dataSource("mongodb://localhost:27017/other", null, null)
+                .load()
         contextRunner
             .withBean(Flyway::class.java, { userFlyway })
             .run { context ->
@@ -63,8 +65,7 @@ class FlywayNcAutoConfigurationTest {
                         override val password: String = "compose-password"
                     }
                 },
-            )
-            .run { context ->
+            ).run { context ->
                 val configuration = context.getBean<Flyway>().configuration
                 configuration.url shouldBe "mongodb://compose-host:37017/compose_db"
                 configuration.user shouldBe "compose-user"
@@ -80,8 +81,7 @@ class FlywayNcAutoConfigurationTest {
             .withPropertyValues(
                 "spring.flyway-nc.url=mongodb://host1:27017,host2:27017/explicit_db?replicaSet=rs0",
                 "spring.flyway-nc.default-schema=ignored_db",
-            )
-            .run { context ->
+            ).run { context ->
                 val configuration = context.getBean<Flyway>().configuration
                 configuration.url shouldBe "mongodb://host1:27017,host2:27017/explicit_db?replicaSet=rs0"
                 configuration.defaultSchema shouldBe null
@@ -96,8 +96,7 @@ class FlywayNcAutoConfigurationTest {
             .withPropertyValues(
                 "spring.flyway-nc.url=mongodb://host1:27017,host2:27017?replicaSet=rs0",
                 "spring.flyway-nc.default-schema=mydb",
-            )
-            .run { context ->
+            ).run { context ->
                 context.getBean<Flyway>().configuration.url shouldBe
                     "mongodb://host1:27017,host2:27017/mydb?replicaSet=rs0"
             }
@@ -109,9 +108,8 @@ class FlywayNcAutoConfigurationTest {
         contextRunner
             .withBean(
                 FlywayConfigurationCustomizer::class.java,
-                { FlywayConfigurationCustomizer { callCount.incrementAndGet() } }
-            )
-            .run { context ->
+                { FlywayConfigurationCustomizer { callCount.incrementAndGet() } },
+            ).run { context ->
                 context.getBean<Flyway>()
                 callCount.get() shouldBe 1
             }

@@ -11,8 +11,8 @@ import org.springframework.core.Ordered
 class FlywayNcMigrationInitializer(
     private val flyway: Flyway,
     private val strategy: FlywayNcMigrationStrategy?,
-) : InitializingBean, Ordered {
-
+) : InitializingBean,
+    Ordered {
     override fun afterPropertiesSet() {
         if (strategy != null) strategy.migrate(flyway) else flyway.migrate()
     }

@@ -6,8 +6,11 @@ Spring Boot's built-in `spring-boot-starter-flyway` is JDBC-only (it requires a 
 
 ## Requirements
 
-- Spring Boot **4.1+** (currently tested against 4.1.0-RC1 — see [Limitations](#limitations))
-- Flyway **12.5+** with Native Connectors enabled (`FLYWAY_NATIVE_CONNECTORS=true`)
+- Spring Boot **4.1+**
+- Flyway with Native Connectors enabled (`FLYWAY_NATIVE_CONNECTORS=true`). The minimum
+  Flyway version depends on the database module you use: **Cassandra needs 12.5.0+**
+  (when its NC module was introduced); **MongoDB needs 12.4.0+** (the version Spring
+  Boot 4.1 manages).
 - JVM 17+ bytecode (toolchain provisioned at JDK 25, compiled to release 17)
 
 ## Modules
@@ -29,7 +32,7 @@ This build publishes six artifacts:
 
 ```kotlin
 plugins {
-    id("org.springframework.boot") version "4.1.0-RC1" // applies io.spring.dependency-management
+    id("org.springframework.boot") version "4.1.0" // applies io.spring.dependency-management
 }
 
 extra["flyway.version"] = "12.6.0" // optional override; defaults to the BOM's pinned version
@@ -145,10 +148,10 @@ For a worked Cassandra example, see [the Cassandra module README](starter/spring
 ## Limitations
 
 - **Database coverage is currently Cassandra and MongoDB.** The BOM and the dedicated database starters (`spring-boot-starter-flyway-nc-cassandra`, `spring-boot-starter-flyway-nc-mongodb`) ship wiring for these two today. Other Flyway NC database modules can still be used with the generic starter by adding the appropriate `flyway-database-nc-*` dependency yourself, but there is no equivalent service-connection support for them.
-- **Spring Boot 4.1 is required and currently a release candidate.** The starter targets the Boot 4.1 autoconfiguration / `ConnectionDetails` APIs and is built against `4.1.0-RC1`. It will not run on Boot 3.x.
+- **Spring Boot 4.1+ is required.** The starter targets the Boot 4.1 autoconfiguration / `ConnectionDetails` APIs (released with Spring Boot 4.1, which manages Flyway 12.4.0).
 - **`FLYWAY_NATIVE_CONNECTORS=true` is mandatory.** The starter does not — and cannot — set it for you. Without it Flyway silently uses its JDBC engine.
 - **No `DataSource` integration.** This is intentional (the NC engine has no `DataSource`), but it means everything Spring Boot's JDBC Flyway starter relies on a `DataSource` for (e.g. autodetection of credentials from `spring.datasource.*`) does not apply here. Configure `spring.flyway-nc.*` or supply a `FlywayNcConnectionDetails` bean.
-- **`migration-suffixes` replaces Flyway's defaults rather than adding to them.** When set, only the listed suffixes are recognised.
+- **`migration-suffixes` replaces Flyway's defaults rather than adding to them.** When set, only the listed suffixes are recognized.
 
 ## Building from source
 

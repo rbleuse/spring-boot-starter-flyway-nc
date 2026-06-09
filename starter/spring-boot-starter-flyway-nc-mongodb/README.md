@@ -18,6 +18,8 @@ dependencies {
 
 See the [root README](../../README.md#installation) for the recommended setup with the Spring Boot Gradle plugin and the `spring-boot-flyway-nc-dependencies` BOM, plus the mandatory `FLYWAY_NATIVE_CONNECTORS=true` environment variable.
 
+**Minimum Flyway version:** 12.4.0 — the Flyway version managed by Spring Boot 4.1.
+
 ## Configuration
 
 All `spring.flyway-nc.*` properties from the generic starter apply — see the [root README](../../README.md#configuration) for the full list. A minimal MongoDB configuration looks like:

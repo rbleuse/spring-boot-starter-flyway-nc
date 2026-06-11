@@ -1,5 +1,5 @@
 [versions]
-springBoot = "4.1.0-RC1"
+springBoot = "4.1.0"
 kotest = "6.1.11"
 kotlin = "2.4.0"
 kotlinter = "5.5.0"

@@ -12,11 +12,34 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  missing-versions:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
+    outputs:
+      has_new: ${{ steps.missing.outputs.has_new }}
+      versions: ${{ steps.missing.outputs.versions }}
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Compute missing Flyway versions
+        id: missing
+        run: |
+          versions="$(.github/scripts/flyway-missing-versions.sh)"
+          versions_json="$(printf '%s\n' "$versions" | jq -R -s -c 'split("\n") | map(select(length > 0))')"
+          echo "versions=${versions_json}" >> "$GITHUB_OUTPUT"
+          if [ -n "$versions" ]; then
+            echo "has_new=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_new=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  validate:
+    needs: missing-versions
+    if: needs.missing-versions.outputs.has_new == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        flyway: ${{ fromJSON(needs.missing-versions.outputs.versions) }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
@@ -25,58 +48,37 @@ jobs:
           distribution: 'zulu'
           java-version: '25.0.3'
 
-      - name: Compute missing Flyway versions
-        id: missing
-        run: |
-          versions="$(.github/scripts/flyway-missing-versions.sh)"
-          {
-            echo "versions<<EOF"
-            echo "$versions"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-          if [ -n "$versions" ]; then
-            echo "has_new=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_new=false" >> "$GITHUB_OUTPUT"
-          fi
+      - name: Test with Flyway ${{ matrix.flyway }}
+        run: ./gradlew test -PflywayVersion=${{ matrix.flyway }}
 
-      - name: Validate new versions inline
-        id: validate
-        if: steps.missing.outputs.has_new == 'true'
-        run: |
-          table='| Version | Build |'$'\n''|---|---|'
-          while IFS= read -r v; do
-            [ -z "$v" ] && continue
-            if ./gradlew test -PflywayVersion="$v"; then
-              table="${table}"$'\n'"| ${v} | :white_check_mark: pass |"
-            else
-              table="${table}"$'\n'"| ${v} | :x: fail |"
-            fi
-          done <<< "${{ steps.missing.outputs.versions }}"
-          {
-            echo "table<<EOF"
-            echo "$table"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
+  open-pull-request:
+    needs: [missing-versions, validate]
+    if: needs.missing-versions.outputs.has_new == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Add versions to the data file
-        if: steps.missing.outputs.has_new == 'true'
         # Edits the data file (.github/flyway-versions.json), NOT the workflow
         # file, so the default GITHUB_TOKEN can push the change — it cannot push
         # edits to .github/workflows/*. jq's default pretty output matches the
         # seeded format, keeping the PR diff to the added line(s).
         run: |
-          while IFS= read -r v; do
-            [ -z "$v" ] && continue
+          jq -r '.[]' <<< '${{ needs.missing-versions.outputs.versions }}' | while IFS= read -r v; do
             tmp="$(mktemp)"
             jq --arg v "$v" '. + [$v]' .github/flyway-versions.json > "$tmp"
             mv "$tmp" .github/flyway-versions.json
-          done <<< "${{ steps.missing.outputs.versions }}"
+          done
 
       - name: Open / update pull request
-        if: steps.missing.outputs.has_new == 'true'
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         with:
+          # Set FLYWAY_VERSION_CHECK_TOKEN to a PAT or GitHub App token if this
+          # repo disables PR creation by the default Actions token.
+          token: ${{ secrets.FLYWAY_VERSION_CHECK_TOKEN || github.token }}
           branch: chore/flyway-versions
           base: main
           title: 'ci: add new Flyway version(s) to the compatibility matrix'
@@ -88,8 +90,4 @@ jobs:
             New Flyway version(s) added to `.github/flyway-versions.json` (the
             source of the CI compatibility matrix).
 
-            Inline build results (PRs opened with `GITHUB_TOKEN` do not trigger the
-            normal CI workflow, so the matrix sweep cannot run on this PR — these
-            results were produced by the cron job instead):
-
-            ${{ steps.validate.outputs.table }}
+            Validated by the matrix jobs in ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}.

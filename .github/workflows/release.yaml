@@ -20,7 +20,7 @@ jobs:
       - name: Verify release version
         shell: bash
         run: |
-          version="$(./gradlew properties --property version --quiet | sed 's/^version: //')"
+          version="$(./gradlew properties --property version --quiet | sed -n 's/^version: //p')"
           test "v$version" = "${{ github.event.release.tag_name }}"
       - name: Build and test
         run: ./gradlew build

@@ -1,4 +1,3 @@
-import org.gradle.accessors.dm.LibrariesForLibs
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -9,10 +8,11 @@ plugins {
     id("org.jetbrains.kotlinx.kover")
 }
 
-val libs = the<LibrariesForLibs>()
+// Generated catalog accessors collide with init-plugin classloaders (e.g. dependency-submission).
+val libs = versionCatalogs.named("libs")
 
 kover {
-    useJacoco(libs.versions.jacoco.get())
+    useJacoco(libs.findVersion("jacoco").get().requiredVersion)
 }
 
 java {
@@ -46,6 +46,6 @@ tasks.withType<Test>().configureEach {
 }
 
 dependencies {
-    "testImplementation"(libs.kotest.assertions.core)
-    "testRuntimeOnly"(libs.junit.platform.launcher)
+    "testImplementation"(libs.findLibrary("kotest-assertions-core").get())
+    "testRuntimeOnly"(libs.findLibrary("junit-platform-launcher").get())
 }

@@ -113,7 +113,7 @@ class FlywayNcAutoConfigurationTest {
                 val failure = context.startupFailure
                 failure shouldNotBe null
                 val messages =
-                    generateSequence<Throwable>(failure) { it.cause }
+                    generateSequence(failure) { it.cause }
                         .mapNotNull { it.message }
                         .toList()
                 messages.any {

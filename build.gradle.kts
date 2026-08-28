@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "io.github.rbleuse"
-version = "1.0.0-SNAPSHOT"
+version = "1.0.0"
 description = "Spring Boot starters for Flyway native connectors"
 
 allprojects {

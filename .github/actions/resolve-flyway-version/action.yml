@@ -21,7 +21,11 @@ runs:
       env:
         FLYWAY_VERSION: ${{ inputs.flyway-version }}
         VERSION_RESOLVER: ${{ github.action_path }}/resolve-version.sh
-        PROPERTIES_FILE: ${{ github.workspace }}/gradle.properties
+        GRADLEW: ${{ github.workspace }}/gradlew
       run: |
-        version="$(bash "$VERSION_RESOLVER" "$FLYWAY_VERSION" "$PROPERTIES_FILE")"
+        version="$FLYWAY_VERSION"
+        if [ -z "$version" ]; then
+          version="$("$GRADLEW" -q printFlywayVersion)"
+        fi
+        version="$(bash "$VERSION_RESOLVER" "$version")"
         echo "version=$version" >> "$GITHUB_OUTPUT"

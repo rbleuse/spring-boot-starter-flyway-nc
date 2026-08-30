@@ -11,12 +11,12 @@ plugins {
 
 description = "Spring Boot starter for Flyway native (non-JDBC) connectors"
 
-val flywayVersion: String by project
+val flywayVersion = rootProject.extra["flywayVersionProvider"] as Provider<String>
 
 dependencies {
-    compileOnly("org.flywaydb:flyway-core:$flywayVersion")
-    runtimeOnly("org.flywaydb:flyway-verb-migrate:$flywayVersion")
-    runtimeOnly("org.flywaydb:flyway-nc-scanners:$flywayVersion")
+    compileOnly(flywayVersion.map { "org.flywaydb:flyway-core:$it" })
+    runtimeOnly(flywayVersion.map { "org.flywaydb:flyway-verb-migrate:$it" })
+    runtimeOnly(flywayVersion.map { "org.flywaydb:flyway-nc-scanners:$it" })
 
     compileOnly(libs.springBoot.autoconfigure)
 
@@ -51,8 +51,8 @@ val verifyFlywayVersion: TaskProvider<Task> = tasks.register("verifyFlywayVersio
         }
 
         val resolvedVersion = resolvedVersions.single()
-        check(resolvedVersion == flywayVersion) {
-            "Configured Flyway version is $flywayVersion, but org.flywaydb:flyway-core resolved to $resolvedVersion"
+        check(resolvedVersion == flywayVersion.get()) {
+            "Configured Flyway version is ${flywayVersion.get()}, but org.flywaydb:flyway-core resolved to $resolvedVersion"
         }
 
         logger.lifecycle("Verified resolved Flyway Core version: $resolvedVersion")

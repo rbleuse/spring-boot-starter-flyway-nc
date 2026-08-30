@@ -5,7 +5,7 @@ plugins {
 
 description = "MongoDB support for the Spring Boot Flyway native connectors starter"
 
-val flywayVersion: String by project
+val flywayVersion = rootProject.extra["flywayVersionProvider"] as Provider<String>
 
 dependencies {
     api(project(":spring-boot-starter-flyway-nc"))
@@ -15,7 +15,7 @@ dependencies {
     compileOnly(libs.springBoot.docker.compose)
     compileOnly(libs.springBoot.testcontainers)
     compileOnly(libs.testcontainers.mongodb)
-    runtimeOnly("org.flywaydb:flyway-database-nc-mongodb:$flywayVersion")
+    runtimeOnly(flywayVersion.map { "org.flywaydb:flyway-database-nc-mongodb:$it" })
 
     testImplementation(platform(libs.springBoot.dependencies))
     testImplementation(libs.springBoot.docker.compose)
@@ -23,6 +23,6 @@ dependencies {
     testImplementation(libs.springBoot.testcontainers)
     testImplementation(libs.testcontainers.mongodb)
     testImplementation(libs.testcontainers.junit.jupiter)
-    testImplementation("org.flywaydb:flyway-database-nc-mongodb:$flywayVersion")
+    testImplementation(flywayVersion.map { "org.flywaydb:flyway-database-nc-mongodb:$it" })
     testImplementation(libs.mongodb.driver.sync)
 }

@@ -8,8 +8,8 @@ Spring Boot's built-in `spring-boot-starter-flyway` is JDBC-only (it requires a 
 
 - Spring Boot **4.2.0-M1+**
 - Flyway **12.11.0+** with Native Connectors enabled (`FLYWAY_NATIVE_CONNECTORS=true`).
-  Spring Boot 4.2.0-M1 manages Flyway 12.11.0, but not every NC module used here, so
-  this build pins them to the same version.
+  The build derives the version from Spring Boot's BOM and applies it to every NC module,
+  including those not managed directly by Spring Boot.
 - JVM 17+ bytecode (toolchain provisioned at JDK 25, compiled to release 17)
 
 ## Modules

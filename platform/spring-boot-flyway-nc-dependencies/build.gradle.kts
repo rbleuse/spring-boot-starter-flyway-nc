@@ -12,7 +12,7 @@ description = """
     via `extra["flyway.version"]` (Spring Boot style).
 """.trimIndent()
 
-val flywayVersion: String by project
+val flywayVersion = rootProject.extra["flywayVersionProvider"] as Provider<String>
 
 // Flyway NC modules currently managed by this BOM. The runtime engine pieces
 // (verb-migrate, nc-scanners and the verb/nc-core/nc-callbacks they pull in)
@@ -39,7 +39,9 @@ dependencies {
         api("${rootProject.group}:spring-boot-starter-flyway-nc-mongodb:${rootProject.version}")
         api("${rootProject.group}:spring-boot-starter-flyway-nc-mongodb-test:${rootProject.version}")
 
-        flywayModules.forEach { api("org.flywaydb:$it:$flywayVersion") }
+        flywayModules.forEach { module ->
+            api(flywayVersion.map { "org.flywaydb:$module:$it" })
+        }
     }
 }
 
@@ -57,7 +59,7 @@ publishing {
                 val pomNode = asNode()
 
                 pomNode.appendNode("properties")
-                    .appendNode("flyway.version", flywayVersion)
+                    .appendNode("flyway.version", flywayVersion.get())
 
                 fun children(node: groovy.util.Node, localName: String): List<groovy.util.Node> =
                     node.children()

@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
 # Prints, one per line, the Flyway versions that should be added to the CI
 # compatibility matrix: the latest patch of every major.minor strictly greater
-# than the highest currently-tested major.minor (pinned default in
-# gradle.properties UNION the version list in .github/flyway-versions.json), up
+# than the highest currently-tested major.minor (Spring Boot's managed default
+# UNION the version list in .github/flyway-versions.json), up
 # to Flyway's latest release, including new majors. Patch releases of
 # already-tested minors and pre-release versions are ignored. Prints nothing
 # when up to date.
 #
-# Overridable inputs (for tests): METADATA_FILE, PROPS, VERSIONS_FILE.
+# Inputs: PINNED_VERSION and, for tests, METADATA_FILE and VERSIONS_FILE.
 set -euo pipefail
 
 METADATA_URL="https://repo1.maven.org/maven2/org/flywaydb/flyway-core/maven-metadata.xml"
-PROPS="${PROPS:-gradle.properties}"
 VERSIONS_FILE="${VERSIONS_FILE:-.github/flyway-versions.json}"
 
 if [ -n "${METADATA_FILE:-}" ]; then
@@ -32,7 +31,7 @@ available="$(printf '%s' "$raw" \
 # silently propose versions that are already tested). A legitimately empty list
 # yields empty output and is fine.
 [ -f "$VERSIONS_FILE" ] || { echo "versions file not found: $VERSIONS_FILE" >&2; exit 1; }
-pinned="$(grep -E '^flywayVersion=' "$PROPS" | head -n1 | cut -d= -f2- | tr -d '[:space:]'"'"'"')"
+pinned="${PINNED_VERSION:?PINNED_VERSION is required}"
 matrix="$(jq -r '.[]' "$VERSIONS_FILE")"
 tested="$(printf '%s\n%s\n' "$pinned" "$matrix" | sed '/^$/d')"
 

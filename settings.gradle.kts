@@ -1,15 +1,3 @@
-plugins {
-    id("com.gradleup.nmcp.settings") version "1.6.1"
-}
-
-nmcpSettings {
-    centralPortal {
-        username = providers.environmentVariable("CENTRAL_PORTAL_USERNAME").orNull
-        password = providers.environmentVariable("CENTRAL_PORTAL_PASSWORD").orNull
-        publishingType = "AUTOMATIC"
-    }
-}
-
 rootProject.name = "flyway-nc-build"
 
 include(":spring-boot-flyway-nc-dependencies")

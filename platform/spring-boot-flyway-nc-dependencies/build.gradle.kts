@@ -12,7 +12,7 @@ description = """
     via `extra["flyway.version"]` (Spring Boot style).
 """.trimIndent()
 
-val flywayVersion = rootProject.extra["flywayVersionProvider"] as Provider<String>
+val flywayVersion = (rootProject.extra["flywayVersionProvider"] as Provider<*>).map { it as String }
 
 // Flyway NC modules currently managed by this BOM. The runtime engine pieces
 // (verb-migrate, nc-scanners and the verb/nc-core/nc-callbacks they pull in)

@@ -11,7 +11,7 @@ plugins {
 
 description = "Spring Boot starter for Flyway native (non-JDBC) connectors"
 
-val flywayVersion = rootProject.extra["flywayVersionProvider"] as Provider<String>
+val flywayVersion = (rootProject.extra["flywayVersionProvider"] as Provider<*>).map { it as String }
 
 dependencies {
     compileOnly(flywayVersion.map { "org.flywaydb:flyway-core:$it" })
@@ -71,6 +71,10 @@ kapt {
         )
     }
 }
+
+tasks.withType<org.jetbrains.kotlin.gradle.internal.KaptWithoutKotlincTask>()
+    .matching { it.name == "kaptKotlin" }
+    .configureEach { kaptProcessJvmArgs.add("--sun-misc-unsafe-memory-access=allow") }
 
 // The Spring configuration processor is registered on the `kapt` (main) configuration only.
 // kapt still spins up a processing round for the test source set, where no annotation processor

@@ -5,7 +5,7 @@ plugins {
 
 description = "MongoDB support for the Spring Boot Flyway native connectors starter"
 
-val flywayVersion = rootProject.extra["flywayVersionProvider"] as Provider<String>
+val flywayVersion = (rootProject.extra["flywayVersionProvider"] as Provider<*>).map { it as String }
 
 dependencies {
     api(project(":spring-boot-starter-flyway-nc"))

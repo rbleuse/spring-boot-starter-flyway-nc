@@ -4,6 +4,7 @@ import org.gradle.api.tasks.testing.TestReport
 plugins {
     base
     `test-report-aggregation`
+    id("com.gradleup.nmcp.aggregation") version "1.6.1"
     id("org.jetbrains.kotlinx.kover")
 }
 
@@ -35,6 +36,10 @@ allprojects {
     group = rootProject.group
     version = rootProject.version
 
+    pluginManager.withPlugin("maven-publish") {
+        pluginManager.apply("com.gradleup.nmcp")
+    }
+
     repositories {
         mavenCentral()
         maven("https://repo.spring.io/milestone")
@@ -49,6 +54,15 @@ val coverageProjectPaths = listOf(
 
 dependencies {
     coverageProjectPaths.forEach { testReportAggregation(project(it)) }
+    subprojects.forEach { nmcpAggregation(project.dependencies.project(it.path)) }
+}
+
+nmcpAggregation {
+    centralPortal {
+        username = providers.environmentVariable("CENTRAL_PORTAL_USERNAME").orNull
+        password = providers.environmentVariable("CENTRAL_PORTAL_PASSWORD").orNull
+        publishingType = "AUTOMATIC"
+    }
 }
 
 kover {
@@ -75,7 +89,7 @@ kover {
 
 reporting {
     reports {
-        val testAggregateTestReport by creating(AggregateTestReport::class) {
+        create<AggregateTestReport>("testAggregateTestReport") {
             testSuiteName = "test"
         }
     }

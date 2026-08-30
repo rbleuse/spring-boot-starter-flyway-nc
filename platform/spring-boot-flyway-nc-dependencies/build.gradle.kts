@@ -49,7 +49,7 @@ publishing {
             from(components["javaPlatform"])
 
             // The generated POM lists each constraint with a literal version
-            // (e.g. <version>12.5.0</version>). For io.spring.dependency-management's
+            // (e.g. <version>12.11.0</version>). For io.spring.dependency-management's
             // `extra["flyway.version"]` override mechanism to work, the Flyway
             // entries must reference `${flyway.version}` and the POM must declare
             // a default value under <properties>. Rewrite the XML here.

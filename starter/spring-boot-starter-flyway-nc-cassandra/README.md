@@ -18,7 +18,7 @@ dependencies {
 
 See the [root README](../../README.md#installation) for the recommended setup with the Spring Boot Gradle plugin and the `spring-boot-flyway-nc-dependencies` BOM, plus the mandatory `FLYWAY_NATIVE_CONNECTORS=true` environment variable.
 
-**Minimum Flyway version:** 12.5.0 — the release that introduced the `flyway-database-nc-cassandra` module.
+**Minimum Flyway version for starter 2.0:** 12.11.0. The `flyway-database-nc-cassandra` module itself was introduced in Flyway 12.5.0.
 
 ## Configuration
 

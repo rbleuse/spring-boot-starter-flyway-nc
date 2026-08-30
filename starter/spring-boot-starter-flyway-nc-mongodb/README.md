@@ -18,7 +18,7 @@ dependencies {
 
 See the [root README](../../README.md#installation) for the recommended setup with the Spring Boot Gradle plugin and the `spring-boot-flyway-nc-dependencies` BOM, plus the mandatory `FLYWAY_NATIVE_CONNECTORS=true` environment variable.
 
-**Minimum Flyway version:** 12.4.0 — the Flyway version managed by Spring Boot 4.1.
+**Minimum Flyway version for starter 2.0:** 12.11.0 — the Flyway version managed by Spring Boot 4.2.0-M1.
 
 ## Configuration
 

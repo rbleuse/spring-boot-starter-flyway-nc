@@ -6,7 +6,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 A Spring Boot auto-configuration starter for Flyway's **Native Connectors** (NC) path — Flyway's non-JDBC engine (Flyway 11/12+) used for databases like Cassandra and MongoDB. Spring Boot's built-in `spring-boot-starter-flyway` is JDBC-only and requires a `DataSource` bean, so this starter intentionally **does not depend on it** and reimplements the analogous initializer/strategy/customizer beans against Flyway's NC API.
 
-Requirements: Spring Boot 4.1+, Flyway 12.5+ with NC enabled, JVM 17+ bytecode.
+Requirements: Spring Boot 4.2.0-M1+, Flyway 12.11+ with NC enabled, JVM 17+ bytecode.
 
 ## Build & test commands
 
@@ -23,7 +23,7 @@ Use the Gradle wrapper:
 
 **Critical:** every `Test` task in the build sets `FLYWAY_NATIVE_CONNECTORS=true`. Running JUnit directly from an IDE without that env var makes Flyway silently fall back to JDBC and tests fail confusingly. If a test failure looks like Flyway is hitting JDBC, check this first.
 
-To build against a different Flyway version, pass `-PflywayVersion=<version>` (e.g. `./gradlew build -PflywayVersion=12.8.0`); the default lives in `gradle.properties` as `flywayVersion` (single source of truth — both the starters' runtime deps and the BOM's pinned versions read from it). CI exercises several Flyway versions via the `compatibility` matrix in `.github/workflows/test.yaml`, whose version list is the data file `.github/flyway-versions.json` (kept out of the workflow file so the default `GITHUB_TOKEN` can edit it — it cannot push changes to `.github/workflows/*`). The daily `.github/workflows/flyway-version-check.yaml` cron appends newly released Flyway versions (latest patch per new minor, including new majors; patch-only bumps ignored) to that data file and opens a PR after validating each new version in parallel matrix jobs.
+To build against a different Flyway version, pass `-PflywayVersion=<version>` (e.g. `./gradlew build -PflywayVersion=13.0.0`); the default lives in `gradle.properties` as `flywayVersion` (single source of truth — both the starters' runtime deps and the BOM's pinned versions read from it). It matches the Flyway version managed by Spring Boot; it remains explicit because Spring Boot does not manage every NC module used by this build. CI exercises several Flyway versions via the `compatibility` matrix in `.github/workflows/test.yaml`, whose version list is the data file `.github/flyway-versions.json` (kept out of the workflow file so the default `GITHUB_TOKEN` can edit it — it cannot push changes to `.github/workflows/*`). The daily `.github/workflows/flyway-version-check.yaml` cron appends newly released Flyway versions (latest patch per new minor, including new majors; patch-only bumps ignored) to that data file and opens a PR after validating each new version in parallel matrix jobs.
 
 ## Toolchain quirk
 
@@ -56,7 +56,7 @@ If you touch this code, regenerate the POM and verify both substitutions still h
 
 `FlywayNcAutoConfiguration` is the generic entry point, registered via `starter/spring-boot-starter-flyway-nc/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`. It activates when `Flyway` is on the classpath and `spring.flyway-nc.enabled != false`, and wires three beans, all `@ConditionalOnMissingBean`:
 
-1. `FlywayNcConnectionDetails` — a default implementation built from `spring.flyway-nc.url` / `user` / `password`. Skipped when a service-connection factory (Docker Compose, Testcontainers, or a user bean) has already contributed one. The interface extends Spring Boot 4.1's `ConnectionDetails`, so it participates in the standard `@ServiceConnection` machinery.
+1. `FlywayNcConnectionDetails` — a default implementation built from `spring.flyway-nc.url` / `user` / `password`. Skipped when a service-connection factory (Docker Compose, Testcontainers, or a user bean) has already contributed one. The interface extends Spring Boot's `ConnectionDetails`, so it participates in the standard `@ServiceConnection` machinery.
 2. `Flyway` — built from `FlywayNcConnectionDetails` plus the remaining `FlywayNcProperties`. The autoconfig has explicit URL/schema handling: if the URL already carries a path it is treated as the schema and `defaultSchema` is **not** applied (URL wins); otherwise, if `defaultSchema` is set, it is URL-encoded and appended as the URL path before `Flyway.configure().dataSource(...)`. All `FlywayConfigurationCustomizer` beans run against the `FluentConfiguration` builder before `.load()`, ordered via `ObjectProvider.orderedStream()`. If you touch this logic, preserve the "URL wins" invariant — silently overriding a user-supplied path with `default-schema` was the bug it was added to prevent.
 3. `FlywayNcMigrationInitializer` — an `InitializingBean` that calls `flyway.migrate()` (or a user-supplied `FlywayNcMigrationStrategy`) in `afterPropertiesSet()`.
 

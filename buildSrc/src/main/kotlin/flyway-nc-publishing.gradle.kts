@@ -35,21 +35,6 @@ publishing {
             }
         }
     }
-
-    repositories {
-        maven {
-            name = "centralPortalSnapshots"
-            url = uri("https://central.sonatype.com/repository/maven-snapshots/")
-            credentials {
-                username = providers.gradleProperty("centralPortalUsername")
-                    .orElse(providers.environmentVariable("CENTRAL_PORTAL_USERNAME"))
-                    .orNull
-                password = providers.gradleProperty("centralPortalPassword")
-                    .orElse(providers.environmentVariable("CENTRAL_PORTAL_PASSWORD"))
-                    .orNull
-            }
-        }
-    }
 }
 
 val signingKeyProvider = providers.gradleProperty("signingInMemoryKey")

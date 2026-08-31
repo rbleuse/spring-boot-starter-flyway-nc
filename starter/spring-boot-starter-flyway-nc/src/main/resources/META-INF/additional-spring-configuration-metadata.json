@@ -31,6 +31,83 @@
       "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
     },
     {
+      "name": "spring.flyway-nc.baseline-on-migrate",
+      "type": "java.lang.Boolean",
+      "description": "Whether to automatically call baseline when migrating a non-empty schema.",
+      "defaultValue": false,
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.baseline-version",
+      "type": "java.lang.String",
+      "description": "Version to tag an existing schema with when executing baseline.",
+      "defaultValue": "1",
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.validate-on-migrate",
+      "type": "java.lang.Boolean",
+      "description": "Whether to automatically call validate when performing a migration.",
+      "defaultValue": true,
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.connect-retries",
+      "type": "java.lang.Integer",
+      "description": "Maximum number of retries when attempting to connect to the database.",
+      "defaultValue": 0,
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.connect-retries-interval",
+      "type": "java.time.Duration",
+      "description": "Maximum time between retries when attempting to connect to the database. If a duration suffix is not specified, seconds will be used.",
+      "defaultValue": "120s",
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.validate-migration-naming",
+      "type": "java.lang.Boolean",
+      "description": "Whether to validate migrations and callbacks whose scripts do not obey the correct naming convention.",
+      "defaultValue": false,
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.fail-on-missing-locations",
+      "type": "java.lang.Boolean",
+      "description": "Whether to fail if a location of migration scripts doesn't exist.",
+      "defaultValue": false,
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.target",
+      "type": "java.lang.String",
+      "description": "Target version up to which migrations should be considered.",
+      "defaultValue": "latest",
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.table",
+      "type": "java.lang.String",
+      "description": "Name of the schema history table that will be used by Flyway.",
+      "defaultValue": "flyway_schema_history",
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.create-schemas",
+      "type": "java.lang.Boolean",
+      "description": "Whether Flyway should attempt to create the schemas specified in the schemas property.",
+      "defaultValue": true,
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
+      "name": "spring.flyway-nc.out-of-order",
+      "type": "java.lang.Boolean",
+      "description": "Whether to allow migrations to be run out of order.",
+      "defaultValue": false,
+      "sourceType": "io.github.rbleuse.flywaync.FlywayNcProperties"
+    },
+    {
       "name": "spring.flyway-nc.locations",
       "type": "java.util.List<java.lang.String>",
       "description": "Locations Flyway scans for migrations.",

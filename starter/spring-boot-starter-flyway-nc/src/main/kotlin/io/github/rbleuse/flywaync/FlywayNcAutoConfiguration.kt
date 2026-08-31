@@ -49,6 +49,17 @@ class FlywayNcAutoConfiguration {
                 .configure()
                 .dataSource(resolvedUrl, connectionDetails.user, connectionDetails.password)
                 .locations(*props.locations.toTypedArray())
+                .baselineOnMigrate(props.baselineOnMigrate)
+                .baselineVersion(props.baselineVersion)
+                .validateOnMigrate(props.validateOnMigrate)
+                .connectRetries(props.connectRetries)
+                .connectRetriesInterval(props.connectRetriesInterval.seconds.toInt())
+                .validateMigrationNaming(props.validateMigrationNaming)
+                .failOnMissingLocations(props.failOnMissingLocations)
+                .target(props.target)
+                .table(props.table)
+                .createSchemas(props.createSchemas)
+                .outOfOrder(props.outOfOrder)
         if (props.migrationSuffixes.isNotEmpty()) {
             config.sqlMigrationSuffixes(*props.migrationSuffixes.toTypedArray())
         }

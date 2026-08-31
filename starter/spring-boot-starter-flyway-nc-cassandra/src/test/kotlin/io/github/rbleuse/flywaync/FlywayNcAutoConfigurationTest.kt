@@ -135,6 +135,37 @@ class FlywayNcAutoConfigurationTest {
             }
     }
 
+    @Test
+    fun `applies migration and connection properties`() {
+        contextRunner
+            .withPropertyValues(
+                "spring.flyway-nc.baseline-on-migrate=true",
+                "spring.flyway-nc.baseline-version=2",
+                "spring.flyway-nc.validate-on-migrate=false",
+                "spring.flyway-nc.connect-retries=3",
+                "spring.flyway-nc.connect-retries-interval=15",
+                "spring.flyway-nc.validate-migration-naming=true",
+                "spring.flyway-nc.fail-on-missing-locations=true",
+                "spring.flyway-nc.target=4",
+                "spring.flyway-nc.table=custom_history",
+                "spring.flyway-nc.create-schemas=false",
+                "spring.flyway-nc.out-of-order=true",
+            ).run { context ->
+                val configuration = context.getBean<Flyway>().configuration
+                configuration.isBaselineOnMigrate shouldBe true
+                configuration.baselineVersion.toString() shouldBe "2"
+                configuration.isValidateOnMigrate shouldBe false
+                configuration.connectRetries shouldBe 3
+                configuration.connectRetriesInterval shouldBe 15
+                configuration.isValidateMigrationNaming shouldBe true
+                configuration.isFailOnMissingLocations shouldBe true
+                configuration.target.toString() shouldBe "4"
+                configuration.table shouldBe "custom_history"
+                configuration.isCreateSchemas shouldBe false
+                configuration.isOutOfOrder shouldBe true
+            }
+    }
+
     @Configuration
     class NoOpMigrationStrategyConfig {
         @Bean

@@ -17,7 +17,7 @@ data class FlywayNcProperties(
     val baselineVersion: String = "1",
     val validateOnMigrate: Boolean = true,
     val connectRetries: Int = 0,
-    @param:DurationUnit(ChronoUnit.SECONDS)
+    @DurationUnit(ChronoUnit.SECONDS)
     val connectRetriesInterval: Duration = Duration.ofSeconds(120),
     val validateMigrationNaming: Boolean = false,
     val failOnMissingLocations: Boolean = false,

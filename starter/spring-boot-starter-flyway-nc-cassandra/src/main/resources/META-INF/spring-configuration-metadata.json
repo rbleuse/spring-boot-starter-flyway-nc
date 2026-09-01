@@ -1,0 +1,25 @@
+{
+  "properties": [
+    {
+      "name": "spring.flyway-nc.lock.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether to serialize Cassandra migrations with a distributed LWT lock.",
+      "defaultValue": true,
+      "sourceType": "io.github.rbleuse.flywaync.cassandra.CassandraFlywayNcLockProperties"
+    },
+    {
+      "name": "spring.flyway-nc.lock.lease-duration",
+      "type": "java.time.Duration",
+      "description": "Lease duration of the Cassandra migration lock. The TTL is rounded up to whole seconds with one extra second for Cassandra expiration precision. The starter renews the lease while migrations run. If no duration suffix is specified, seconds are used.",
+      "defaultValue": "2m",
+      "sourceType": "io.github.rbleuse.flywaync.cassandra.CassandraFlywayNcLockProperties"
+    },
+    {
+      "name": "spring.flyway-nc.lock.acquire-timeout",
+      "type": "java.time.Duration",
+      "description": "Maximum time to wait for another Cassandra migration runner to release the lock. If no duration suffix is specified, seconds are used.",
+      "defaultValue": "10m",
+      "sourceType": "io.github.rbleuse.flywaync.cassandra.CassandraFlywayNcLockProperties"
+    }
+  ]
+}

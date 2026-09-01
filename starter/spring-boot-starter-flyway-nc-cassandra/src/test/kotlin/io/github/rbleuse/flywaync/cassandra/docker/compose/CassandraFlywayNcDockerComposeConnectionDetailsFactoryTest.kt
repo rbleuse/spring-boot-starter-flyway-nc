@@ -1,5 +1,6 @@
-package io.github.rbleuse.flywaync
+package io.github.rbleuse.flywaync.cassandra.docker.compose
 
+import io.github.rbleuse.flywaync.FlywayNcConnectionDetails
 import io.kotest.matchers.shouldBe
 import org.junit.jupiter.api.Test
 import org.springframework.boot.autoconfigure.service.connection.ConnectionDetailsFactories
@@ -7,27 +8,29 @@ import org.springframework.boot.docker.compose.core.ConnectionPorts
 import org.springframework.boot.docker.compose.core.ImageReference
 import org.springframework.boot.docker.compose.core.RunningService
 import org.springframework.boot.docker.compose.service.connection.DockerComposeConnectionSource
+import org.springframework.core.env.Environment
 import org.springframework.mock.env.MockEnvironment
 
-class MongoDBFlywayNcDockerComposeConnectionDetailsFactoryTest {
+class CassandraFlywayNcDockerComposeConnectionDetailsFactoryTest {
     @Test
-    fun `creates Flyway NC connection details for mongo compose services`() {
+    fun `creates Flyway NC connection details for cassandra compose services`() {
         val source =
             dockerComposeConnectionSource(
                 object : RunningService {
-                    override fun name(): String = "mongo"
+                    override fun name(): String = "cassandra"
 
-                    override fun image(): ImageReference = ImageReference.of("mongo:8.0.21")
+                    override fun image(): ImageReference = ImageReference.of("cassandra:5.0")
 
                     override fun host(): String = "127.0.0.1"
 
-                    override fun ports(): ConnectionPorts = singlePort(27017, 37017)
+                    override fun ports(): ConnectionPorts = singlePort(9042, 19042)
 
                     override fun env(): Map<String, String> =
                         mapOf(
-                            "MONGO_INITDB_DATABASE" to "flyway_db",
-                            "MONGO_INITDB_ROOT_USERNAME" to "flyway_user",
-                            "MONGO_INITDB_ROOT_PASSWORD" to "flyway_password",
+                            "CASSANDRA_DC" to "dc-test",
+                            "CASSANDRA_KEYSPACE" to "flyway_keyspace",
+                            "CASSANDRA_USER" to "flyway_user",
+                            "CASSANDRA_PASSWORD" to "flyway_password",
                         )
 
                     override fun labels(): Map<String, String> = emptyMap()
@@ -39,44 +42,15 @@ class MongoDBFlywayNcDockerComposeConnectionDetailsFactoryTest {
                 .getConnectionDetails(source, false)[FlywayNcConnectionDetails::class.java]
                 as FlywayNcConnectionDetails
 
-        details.url shouldBe "mongodb://127.0.0.1:37017/flyway_db?authSource=admin"
+        details.url shouldBe "cassandra://127.0.0.1:19042/flyway_keyspace?localdatacenter=dc-test"
         details.user shouldBe "flyway_user"
         details.password shouldBe "flyway_password"
-    }
-
-    @Test
-    fun `omits authSource when no credentials are provided`() {
-        val source =
-            dockerComposeConnectionSource(
-                object : RunningService {
-                    override fun name(): String = "mongo"
-
-                    override fun image(): ImageReference = ImageReference.of("mongo:8.0.21")
-
-                    override fun host(): String = "127.0.0.1"
-
-                    override fun ports(): ConnectionPorts = singlePort(27017, 37017)
-
-                    override fun env(): Map<String, String> = mapOf("MONGO_INITDB_DATABASE" to "flyway_db")
-
-                    override fun labels(): Map<String, String> = emptyMap()
-                },
-            )
-
-        val details =
-            ConnectionDetailsFactories(javaClass.classLoader)
-                .getConnectionDetails(source, false)[FlywayNcConnectionDetails::class.java]
-                as FlywayNcConnectionDetails
-
-        details.url shouldBe "mongodb://127.0.0.1:37017/flyway_db"
-        details.user shouldBe null
-        details.password shouldBe null
     }
 
     private fun dockerComposeConnectionSource(service: RunningService): DockerComposeConnectionSource {
         val constructor =
             DockerComposeConnectionSource::class.java
-                .getDeclaredConstructor(RunningService::class.java, org.springframework.core.env.Environment::class.java)
+                .getDeclaredConstructor(RunningService::class.java, Environment::class.java)
         constructor.isAccessible = true
         return constructor.newInstance(service, MockEnvironment())
     }

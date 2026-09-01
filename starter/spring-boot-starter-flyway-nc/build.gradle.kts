@@ -25,6 +25,7 @@ dependencies {
 
     testImplementation(platform(libs.springBoot.dependencies))
     testImplementation(libs.springBoot.starter.test)
+    testImplementation(flywayVersion.map { "org.flywaydb:flyway-core:$it" })
 }
 
 val runtimeClasspath: NamedDomainObjectProvider<Configuration> = configurations.named("runtimeClasspath")

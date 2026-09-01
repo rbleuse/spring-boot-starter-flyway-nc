@@ -5,6 +5,7 @@ kotlin = "2.4.10"
 kotlinter = "5.5.0"
 kover = "0.9.9"
 jacoco = "0.8.15"
+mockk = "1.14.11"
 
 [libraries]
 springBoot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
@@ -21,6 +22,7 @@ testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-jun
 mongodb-driver-sync = { module = "org.mongodb:mongodb-driver-sync" }
 
 kotest-assertions-core = { module = "io.kotest:kotest-assertions-core", version.ref = "kotest" }
+mockk = { module = "io.mockk:mockk-jvm", version.ref = "mockk" }
 
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 

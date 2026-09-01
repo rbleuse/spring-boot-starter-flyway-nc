@@ -53,7 +53,7 @@ For database-specific starters (which bundle the matching `flyway-database-nc-*`
 - [Cassandra](starter/spring-boot-starter-flyway-nc-cassandra/README.md)
 - [MongoDB](starter/spring-boot-starter-flyway-nc-mongodb/README.md)
 
-**How resolution works:** the starter declares `flyway-verb-migrate` and `flyway-nc-scanners` as `runtimeOnly`; the DB module transitively brings `flyway-core` and `flyway-nc-core`. The BOM pins every Flyway NC module to `${flyway.version}`, which `io.spring.dependency-management` lets you override via `extra["flyway.version"]` — the same mechanism Spring Boot uses for its own managed dependencies.
+**How resolution works:** the generic starter declares `flyway-verb-migrate` and `flyway-nc-scanners` as `runtimeOnly`. The DB module transitively brings `flyway-core` and `flyway-nc-core`. The BOM pins every Flyway NC module to `${flyway.version}`, which `io.spring.dependency-management` lets you override via `extra["flyway.version"]` — the same mechanism Spring Boot uses for its own managed dependencies.
 
 ### Enabling Flyway's Native Connectors path
 

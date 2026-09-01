@@ -31,7 +31,55 @@ spring:
     default-schema: my_keyspace
 ```
 
-This starter defaults `spring.flyway-nc.migration-suffixes` to `[".cql"]` (Flyway's own default is `.sql`), so you don't need to set it. Provide the property explicitly to override.
+This starter defaults `spring.flyway-nc.migration-suffixes` to `[".cql"]` (Flyway's own default is `.sql`) and disables transactional execution because Cassandra migrations cannot be rolled back. This also lets Flyway record failed migrations in its schema-history table. A user `FlywayConfigurationCustomizer` can override either default.
+
+### Distributed migration lock
+
+The Cassandra-specific LWT lock is enabled by default. Its timings can be customized when several application instances may start concurrently:
+
+```yaml
+spring:
+  flyway-nc:
+    lock:
+      lease-duration: 2m
+      acquire-timeout: 10m
+```
+
+```mermaid
+flowchart TD
+    startup["Spring Boot startup"] --> lock["Cassandra migration lock<br/>LWT acquire<br/>flyway_schema_lock in target keyspace"]
+    lock --> migrate["Flyway migrate<br/>flyway-verb-migrate"]
+    lock --> heartbeat
+    subgraph heartbeatLoop["Heartbeat loop (while the lock is held)"]
+        direction LR
+        heartbeat["Renew TTL<br/>Immediately, then every lease/3"] --> renewed["Lease renewed"]
+        renewed --> heartbeat
+    end
+    heartbeat -.-> halt["Heartbeat renewal failed<br/>Log lock loss<br/>Halt JVM"]
+    migrate --> executed{"Migrations executed?"}
+    executed -- Yes --> finalAgreement["Final schema agreement"]
+    executed -- No --> stopHeartbeat["Stop heartbeat"]
+    finalAgreement --> stopHeartbeat
+    stopHeartbeat --> release["Release LWT lock"] --> ready
+```
+
+With the built-in migration strategy and locking enabled, the starter acquires the lock before calling `migrate()`, including when no migration is pending. As with Spring Boot, Flyway handles validation according to `spring.flyway-nc.validate-on-migrate`; the starter does not call `info()` or `validate()` explicitly. After acquiring the lock, `migrate()` resolves pending migrations again, so concurrent pods cannot execute the same migration.
+
+The lock table persists. Each startup that acquires the lock reuses the same `lock_name`, then deletes the row when releasing it. If the process stops before release, Cassandra removes the row when its TTL expires.
+
+The stored TTL rounds the lease up to whole seconds and adds one second to cover Cassandra's expiration precision. Heartbeat timings still use the configured lease duration.
+
+When the configured schemas contain no application tables, the starter initializes an empty Flyway history table under the lock. The lock table alone does not trigger baselining or cause migrations to be skipped. Non-empty application schemas still follow the configured `baseline-on-migrate` and `baseline-version` settings.
+
+If a heartbeat cannot renew the lease, the starter logs the failure and immediately halts the JVM. This deliberately favours safety over availability: the current pod cannot continue submitting CQL while another pod may acquire the expired lease.
+
+The lock reuses Flyway's resolved connection details; it does not require a separate URL, username, password, or environment configuration. This includes URLs supplied by the Docker Compose and Testcontainers service-connection factories. The resolved URL must contain a keyspace: directly in its path, supplied by `CASSANDRA_KEYSPACE`, or appended from `spring.flyway-nc.default-schema`.
+
+After a pod executes at least one migration, the starter performs a final schema-agreement check before releasing the lock. Schema agreement means that all nodes currently reported as `UP` expose the same schema version; it is not a structural diff of tables, columns, primary keys, UDTs, indexes, or table options. A lock, migration, validation, or final agreement failure prevents the application from becoming ready.
+
+Set `spring.flyway-nc.lock.enabled=false` to opt out. The feature requires permission to create the lock table and support for Cassandra lightweight transactions. A target keyspace is required, just as it is for Flyway's Cassandra Native Connector.
+
+The built-in migration strategy closes Flyway's Cassandra session after each `migrate()` call, including failures. This works around Flyway NC 12.11 leaving sessions open between operations. Cleanup remains enabled when the lock is disabled. During a locked startup, at most one Flyway session and one lock session are open at a time; all are closed afterwards. A user-defined migration strategy replaces this lifecycle handling too.
 
 ### Cassandra URL format
 
@@ -68,6 +116,8 @@ With the compose service running, you can omit `spring.flyway-nc.url`, `user`, a
 - `CASSANDRA_KEYSPACE` (optional; embedded in the URL path when set).
 - Credentials from `CASSANDRA_USER` or `CASSANDRA_USERNAME` plus `CASSANDRA_PASSWORD`.
 
+When `CASSANDRA_KEYSPACE` is omitted, configure `spring.flyway-nc.default-schema`. In both cases, the target keyspace must already exist before Flyway and the lock initialize.
+
 ### Testcontainers service connections
 
 When `org.springframework.boot:spring-boot-testcontainers` is on the test classpath, a `CassandraContainer` annotated with `@ServiceConnection` supplies the connection details automatically:
@@ -78,9 +128,7 @@ val cassandra = CassandraContainer(DockerImageName.parse("cassandra:5.0"))
     .withInitScript("cassandra-init.cql")
 ```
 
-The factory derives the URL from the container's `contactPoint` and `localDatacenter`, and forwards the container's `username` / `password`. The factory does not embed a keyspace, so set `spring.flyway-nc.default-schema` (or use an init script that creates the keyspace) when migrations need one.
-
-> **Note:** this starter targets the modern `org.testcontainers.cassandra.CassandraContainer` (from `org.testcontainers:testcontainers-cassandra`), not the legacy `org.testcontainers.containers.CassandraContainer` shipped under `org.testcontainers:cassandra`.
+The factory derives the URL from the container's `contactPoint` and `localDatacenter`, and forwards the container's `username` / `password`. It does not embed a keyspace, so `spring.flyway-nc.default-schema` is required. The target keyspace must already exist; an init script such as `cassandra-init.cql` can create it before Flyway starts.
 
 ## Customizing migration startup
 

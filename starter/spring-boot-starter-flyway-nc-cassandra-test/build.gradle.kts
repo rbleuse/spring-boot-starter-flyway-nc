@@ -8,5 +8,8 @@ description = "Starter for testing Spring Boot apps that use Flyway NC with Cass
 dependencies {
     api(project(":spring-boot-starter-flyway-nc-cassandra"))
     api(platform(libs.springBoot.dependencies))
-    api(libs.springBoot.starter.test)
+    api(libs.springBoot.starter.test) {
+        exclude(group = "org.mockito")
+    }
+    api(libs.mockk)
 }

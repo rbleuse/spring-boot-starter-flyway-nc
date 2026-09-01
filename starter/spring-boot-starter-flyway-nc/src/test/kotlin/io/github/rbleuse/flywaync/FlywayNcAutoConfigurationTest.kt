@@ -1,8 +1,17 @@
-﻿package io.github.rbleuse.flywaync
+package io.github.rbleuse.flywaync
 
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import io.kotest.matchers.types.shouldBeInstanceOf
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
+import io.mockk.verify
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.configuration.FluentConfiguration
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.getBean
 import org.springframework.boot.autoconfigure.AutoConfigurations
@@ -12,19 +21,48 @@ import org.springframework.context.annotation.Configuration
 import java.util.concurrent.atomic.AtomicInteger
 
 class FlywayNcAutoConfigurationTest {
+    private lateinit var configuration: FluentConfiguration
+    private lateinit var flyway: Flyway
+
     private val contextRunner =
         ApplicationContextRunner()
             .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
             .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
-            .withPropertyValues("spring.flyway-nc.url=cassandra://localhost:9042/test?localdatacenter=dc1")
+            .withPropertyValues("spring.flyway-nc.url=test://localhost:1234/schema")
+
+    @BeforeEach
+    fun setUp() {
+        configuration = mockk()
+        flyway = mockk()
+        mockkStatic(Flyway::class)
+        every { Flyway.configure() } returns configuration
+        every { configuration.dataSource(any(), any(), any()) } returns configuration
+        every { configuration.locations(*anyVararg<String>()) } returns configuration
+        every { configuration.baselineOnMigrate(any()) } returns configuration
+        every { configuration.baselineVersion(any<String>()) } returns configuration
+        every { configuration.validateOnMigrate(any()) } returns configuration
+        every { configuration.connectRetries(any()) } returns configuration
+        every { configuration.connectRetriesInterval(any()) } returns configuration
+        every { configuration.validateMigrationNaming(any()) } returns configuration
+        every { configuration.failOnMissingLocations(any()) } returns configuration
+        every { configuration.target(any<String>()) } returns configuration
+        every { configuration.table(any()) } returns configuration
+        every { configuration.createSchemas(any()) } returns configuration
+        every { configuration.outOfOrder(any()) } returns configuration
+        every { configuration.defaultSchema(any()) } returns configuration
+        every { configuration.load() } returns flyway
+    }
+
+    @AfterEach
+    fun tearDown() {
+        unmockkStatic(Flyway::class)
+    }
 
     @Test
     fun `creates Flyway and initializer beans by default`() {
         contextRunner.run { context ->
-            context.containsBean("flyway") shouldBe true
-            context.containsBean("flywayInitializer") shouldBe true
-            context.getBean<Flyway>()
-            context.getBean<FlywayNcMigrationInitializer>()
+            context.getBean("flyway") shouldBe flyway
+            context.getBean("flywayInitializer").shouldBeInstanceOf<FlywayNcMigrationInitializer>()
         }
     }
 
@@ -40,11 +78,7 @@ class FlywayNcAutoConfigurationTest {
 
     @Test
     fun `user-defined Flyway bean overrides autoconfig bean`() {
-        val userFlyway =
-            Flyway
-                .configure()
-                .dataSource("cassandra://localhost:9042/other?localdatacenter=dc1", null, null)
-                .load()
+        val userFlyway = mockk<Flyway>()
         contextRunner
             .withBean(Flyway::class.java, { userFlyway })
             .run { context ->
@@ -61,17 +95,19 @@ class FlywayNcAutoConfigurationTest {
                 FlywayNcConnectionDetails::class.java,
                 {
                     object : FlywayNcConnectionDetails {
-                        override val url: String = "cassandra://compose-host:19042/compose_keyspace?localdatacenter=compose-dc"
+                        override val url: String = "test://compose-host:1234/compose_schema"
                         override val user: String = "compose-user"
                         override val password: String = "compose-password"
                     }
                 },
-            ).run { context ->
-                val configuration = context.getBean<Flyway>().configuration
-                configuration.url shouldBe
-                    "cassandra://compose-host:19042/compose_keyspace?localdatacenter=compose-dc"
-                configuration.user shouldBe "compose-user"
-                configuration.password shouldBe "compose-password"
+            ).run {
+                verify {
+                    configuration.dataSource(
+                        "test://compose-host:1234/compose_schema",
+                        "compose-user",
+                        "compose-password",
+                    )
+                }
             }
     }
 
@@ -81,11 +117,13 @@ class FlywayNcAutoConfigurationTest {
             .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
             .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
             .withPropertyValues(
-                "spring.flyway-nc.url=cassandra://localhost:9042?localdatacenter=dc1",
-                "spring.flyway-nc.default-schema=my keyspace",
-            ).run { context ->
-                context.getBean<Flyway>().configuration.url shouldBe
-                    "cassandra://localhost:9042/my%20keyspace?localdatacenter=dc1"
+                "spring.flyway-nc.url=test://localhost:1234",
+                "spring.flyway-nc.default-schema=my schema",
+            ).run {
+                verify {
+                    configuration.dataSource("test://localhost:1234/my%20schema", null, null)
+                    configuration.defaultSchema("my schema")
+                }
             }
     }
 
@@ -95,12 +133,37 @@ class FlywayNcAutoConfigurationTest {
             .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
             .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
             .withPropertyValues(
-                "spring.flyway-nc.url=cassandra://localhost:9042/explicit_ks?localdatacenter=dc1",
-                "spring.flyway-nc.default-schema=ignored_ks",
-            ).run { context ->
-                val configuration = context.getBean<Flyway>().configuration
-                configuration.url shouldBe "cassandra://localhost:9042/explicit_ks?localdatacenter=dc1"
-                configuration.defaultSchema shouldBe null
+                "spring.flyway-nc.url=test://host1:1234,host2:1234/explicit_schema?cluster=primary",
+                "spring.flyway-nc.default-schema=ignored_schema",
+            ).run {
+                verify {
+                    configuration.dataSource(
+                        "test://host1:1234,host2:1234/explicit_schema?cluster=primary",
+                        null,
+                        null,
+                    )
+                }
+                verify(exactly = 0) { configuration.defaultSchema(any()) }
+            }
+    }
+
+    @Test
+    fun `default-schema is appended to a multi-host URL without a path`() {
+        ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
+            .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
+            .withPropertyValues(
+                "spring.flyway-nc.url=test://host1:1234,host2:1234?cluster=primary",
+                "spring.flyway-nc.default-schema=my_schema",
+            ).run {
+                verify {
+                    configuration.dataSource(
+                        "test://host1:1234,host2:1234/my_schema?cluster=primary",
+                        null,
+                        null,
+                    )
+                    configuration.defaultSchema("my_schema")
+                }
             }
     }
 
@@ -129,8 +192,7 @@ class FlywayNcAutoConfigurationTest {
             .withBean(
                 FlywayConfigurationCustomizer::class.java,
                 { FlywayConfigurationCustomizer { callCount.incrementAndGet() } },
-            ).run { context ->
-                context.getBean<Flyway>()
+            ).run {
                 callCount.get() shouldBe 1
             }
     }
@@ -150,19 +212,20 @@ class FlywayNcAutoConfigurationTest {
                 "spring.flyway-nc.table=custom_history",
                 "spring.flyway-nc.create-schemas=false",
                 "spring.flyway-nc.out-of-order=true",
-            ).run { context ->
-                val configuration = context.getBean<Flyway>().configuration
-                configuration.isBaselineOnMigrate shouldBe true
-                configuration.baselineVersion.toString() shouldBe "2"
-                configuration.isValidateOnMigrate shouldBe false
-                configuration.connectRetries shouldBe 3
-                configuration.connectRetriesInterval shouldBe 15
-                configuration.isValidateMigrationNaming shouldBe true
-                configuration.isFailOnMissingLocations shouldBe true
-                configuration.target.toString() shouldBe "4"
-                configuration.table shouldBe "custom_history"
-                configuration.isCreateSchemas shouldBe false
-                configuration.isOutOfOrder shouldBe true
+            ).run {
+                verify {
+                    configuration.baselineOnMigrate(true)
+                    configuration.baselineVersion("2")
+                    configuration.validateOnMigrate(false)
+                    configuration.connectRetries(3)
+                    configuration.connectRetriesInterval(15)
+                    configuration.validateMigrationNaming(true)
+                    configuration.failOnMissingLocations(true)
+                    configuration.target("4")
+                    configuration.table("custom_history")
+                    configuration.createSchemas(false)
+                    configuration.outOfOrder(true)
+                }
             }
     }
 

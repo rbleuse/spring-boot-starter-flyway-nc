@@ -11,7 +11,9 @@ dependencies {
     api(project(":spring-boot-starter-flyway-nc"))
 
     compileOnly(flywayVersion.map { "org.flywaydb:flyway-core:$it" })
+    compileOnly(flywayVersion.map { "org.flywaydb:flyway-database-nc-cassandra:$it" })
     compileOnly(platform(libs.springBoot.dependencies))
+    compileOnly("org.apache.cassandra:java-driver-core")
     compileOnly(libs.springBoot.autoconfigure)
     compileOnly(libs.springBoot.docker.compose)
     compileOnly(libs.springBoot.testcontainers)

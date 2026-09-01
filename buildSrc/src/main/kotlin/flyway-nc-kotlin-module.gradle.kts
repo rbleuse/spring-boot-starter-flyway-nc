@@ -45,7 +45,12 @@ tasks.withType<Test>().configureEach {
     }
 }
 
+configurations.matching { it.name.startsWith("test") }.configureEach {
+    exclude(group = "org.mockito")
+}
+
 dependencies {
     "testImplementation"(libs.findLibrary("kotest-assertions-core").get())
+    "testImplementation"(libs.findLibrary("mockk").get())
     "testRuntimeOnly"(libs.findLibrary("junit-platform-launcher").get())
 }

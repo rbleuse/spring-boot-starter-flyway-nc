@@ -15,7 +15,7 @@ description = """
 val flywayVersion = (rootProject.extra["flywayVersionProvider"] as Provider<*>).map { it as String }
 
 // Flyway NC modules currently managed by this BOM. The runtime engine pieces
-// (verb-migrate, nc-scanners and the verb/nc-core/nc-callbacks they pull in)
+// (verb-info, verb-migrate, nc-scanners and the verb/nc-core/nc-callbacks they pull in)
 // are needed by every consumer; the database-nc-* modules are picked per
 // consumer based on their target database.
 val flywayModules = listOf(
@@ -24,6 +24,7 @@ val flywayModules = listOf(
     "flyway-nc-callbacks",
     "flyway-nc-scanners",
     "flyway-verb-baseline",
+    "flyway-verb-info",
     "flyway-verb-migrate",
     "flyway-verb-schemas",
     "flyway-verb-validate",
@@ -74,7 +75,7 @@ publishing {
                     val groupNode = children(dep, "groupId").firstOrNull() ?: return@forEach
                     if (groupNode.text() != "org.flywaydb") return@forEach
                     val versionNode = children(dep, "version").firstOrNull() ?: return@forEach
-                    versionNode.setValue("\${flyway.version}")
+                    versionNode.setValue($$"${flyway.version}")
                 }
             }
         }

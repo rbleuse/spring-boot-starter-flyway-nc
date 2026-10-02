@@ -3,7 +3,7 @@ springBoot = "4.2.0-M1"
 kotest = "6.2.5"
 kotlin = "2.4.20"
 kotlinter = "5.5.0"
-kover = "0.9.9"
+kover = "0.9.10"
 jacoco = "0.8.15"
 
 [libraries]

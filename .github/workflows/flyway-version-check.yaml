@@ -46,7 +46,8 @@ jobs:
   validate:
     needs: missing-versions
     if: needs.missing-versions.outputs.has_new == 'true'
-    runs-on: ubuntu-latest
+    # shortcut: MongoDB 8 fails on newer kernels; restore ubuntu-latest after SERVER-131779.
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:

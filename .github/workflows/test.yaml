@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'zulu'
-          java-version: '25.0.4'
+          java-version: '25.0.5'
       - name: Read configured Flyway version
         id: flyway_version
         uses: ./.github/actions/resolve-flyway-version
@@ -56,7 +56,7 @@ jobs:
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'zulu'
-          java-version: '25.0.4'
+          java-version: '25.0.5'
       - name: Read configured Flyway version
         id: flyway_version
         uses: ./.github/actions/resolve-flyway-version
@@ -89,7 +89,7 @@ jobs:
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'zulu'
-          java-version: '25.0.4'
+          java-version: '25.0.5'
       - name: Generate and submit dependency graph
         uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6
         with:

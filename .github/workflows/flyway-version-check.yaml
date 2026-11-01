@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'zulu'
-          java-version: '25.0.4'
+          java-version: '25.0.5'
 
       - name: Read Spring Boot's Flyway version
         id: flyway_version
@@ -58,7 +58,7 @@ jobs:
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: 'zulu'
-          java-version: '25.0.3'
+          java-version: '25.0.5'
 
       - name: Test with Flyway ${{ matrix.flyway }}
         run: ./gradlew test -PflywayVersion=${{ matrix.flyway }}

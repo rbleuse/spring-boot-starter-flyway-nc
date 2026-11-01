@@ -4,7 +4,7 @@ kotest = "6.2.6"
 kotlin = "2.4.21"
 kotlinter = "5.5.0"
 kover = "0.9.11"
-jacoco = "0.8.15"
+jacoco = "0.8.16"
 
 [libraries]
 springBoot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }

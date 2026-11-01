@@ -53,7 +53,7 @@ For database-specific starters (which bundle the matching `flyway-database-nc-*`
 - [Cassandra](starter/spring-boot-starter-flyway-nc-cassandra/README.md)
 - [MongoDB](starter/spring-boot-starter-flyway-nc-mongodb/README.md)
 
-**How resolution works:** the generic starter declares `flyway-verb-migrate` and `flyway-nc-scanners` as `runtimeOnly`. The DB module transitively brings `flyway-core` and `flyway-nc-core`. The BOM pins every Flyway NC module to `${flyway.version}`, which `io.spring.dependency-management` lets you override via `extra["flyway.version"]` — the same mechanism Spring Boot uses for its own managed dependencies.
+**How resolution works:** the generic starter declares `flyway-verb-info`, `flyway-verb-migrate` and `flyway-nc-scanners` as `runtimeOnly`. The DB module transitively brings `flyway-core` and `flyway-nc-core`. The BOM pins every Flyway NC module to `${flyway.version}`, which `io.spring.dependency-management` lets you override via `extra["flyway.version"]` — the same mechanism Spring Boot uses for its own managed dependencies.
 
 ### Enabling Flyway's Native Connectors path
 
@@ -110,6 +110,32 @@ Database-specific starters can contribute `FlywayNcConnectionDetails` beans via 
 1. **`FlywayNcConnectionDetails`** — a default implementation built from `spring.flyway-nc.url`, `user`, and `password`. Skipped when a service-connection factory (Docker Compose, Testcontainers) has already contributed one.
 2. **`Flyway`** — built from `FlywayNcConnectionDetails` plus the remaining `FlywayNcProperties`. All discovered `FlywayConfigurationCustomizer` beans run against the `FluentConfiguration` builder before `.load()`, ordered via `ObjectProvider.orderedStream()`.
 3. **`FlywayNcMigrationInitializer`** — an `InitializingBean` that calls `flyway.migrate()` (or a user-supplied `FlywayNcMigrationStrategy`) in `afterPropertiesSet()`.
+
+## Actuator
+
+Add Spring Boot Actuator to your application and expose the `flywaync` endpoint:
+
+```kotlin
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+}
+```
+
+```yaml
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,flywaync
+```
+
+`GET /actuator/flywaync` returns migration details and states (such as `SUCCESS` and `PENDING`), grouped by application context and Flyway bean name, using [Spring Boot's standard response format](https://docs.spring.io/spring-boot/api/rest/actuator/flyway.html).
+
+The starter provides its own `FlywayNcEndpoint` with Boot's response format and includes `flyway-verb-info` for NC migration information. It does not depend on `spring-boot-flyway`, Spring JDBC, or a JDBC pool. Its `flywayNcEndpoint` bean and `flywaync` endpoint ID are distinct from Spring Boot's `flywayEndpoint` bean and `flyway` endpoint, so both can coexist. Actuator itself remains optional; its standard endpoint access and exposure settings apply, including `management.endpoint.flywaync.access=none` to disable access. This endpoint is separate from `/actuator/health` and the Kubernetes liveness/readiness probes.
+
+The NC endpoint closes native database connections after each read, including failed reads, to work around Flyway NC 12.11 leaving them open, including when Spring Boot's Flyway module is also present. Use `/actuator/flywaync` to retain this cleanup; Spring Boot's `/actuator/flyway` endpoint keeps its own behavior.
+
+The Cassandra starter defaults `management.endpoint.flywaync.cache.time-to-live` to `1m`, using Actuator's standard response cache to avoid repeatedly opening and closing Cassandra sessions. Application configuration takes precedence: set another duration to change it, or `0ms` to disable caching. Cached migration information can be up to one minute old with the default. This does not change the cache settings of Spring Boot's `flyway` endpoint. The generic and MongoDB starters do not set a cache duration.
 
 ## Extension points
 

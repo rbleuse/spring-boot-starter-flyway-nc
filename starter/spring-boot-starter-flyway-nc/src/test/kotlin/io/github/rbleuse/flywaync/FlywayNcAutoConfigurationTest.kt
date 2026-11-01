@@ -1,5 +1,6 @@
 package io.github.rbleuse.flywaync
 
+import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -9,15 +10,34 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkStatic
 import io.mockk.verify
 import org.flywaydb.core.Flyway
+import org.flywaydb.core.api.CoreMigrationType
+import org.flywaydb.core.api.FlywayException
+import org.flywaydb.core.api.MigrationInfo
+import org.flywaydb.core.api.MigrationInfoService
+import org.flywaydb.core.api.MigrationState
+import org.flywaydb.core.api.MigrationVersion
 import org.flywaydb.core.api.configuration.FluentConfiguration
+import org.flywaydb.core.internal.nc.AbstractNativeConnectorsDatabase
+import org.flywaydb.core.internal.nc.NativeConnectorsDatabase
+import org.flywaydb.core.internal.plugin.PluginRegister
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.getBean
+import org.springframework.boot.actuate.autoconfigure.endpoint.EndpointAutoConfiguration
+import org.springframework.boot.actuate.endpoint.invoke.convert.ConversionServiceParameterValueMapper
+import org.springframework.boot.actuate.endpoint.web.EndpointMediaTypes
+import org.springframework.boot.actuate.endpoint.web.WebEndpointHttpMethod
+import org.springframework.boot.actuate.endpoint.web.annotation.WebEndpointDiscoverer
 import org.springframework.boot.autoconfigure.AutoConfigurations
+import org.springframework.boot.flyway.actuate.endpoint.FlywayEndpoint
+import org.springframework.boot.flyway.autoconfigure.FlywayEndpointAutoConfiguration
+import org.springframework.boot.test.context.FilteredClassLoader
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
+import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.util.ClassUtils
 import java.util.concurrent.atomic.AtomicInteger
 
 class FlywayNcAutoConfigurationTest {
@@ -29,6 +49,15 @@ class FlywayNcAutoConfigurationTest {
             .withConfiguration(AutoConfigurations.of(FlywayNcAutoConfiguration::class.java))
             .withUserConfiguration(NoOpMigrationStrategyConfig::class.java)
             .withPropertyValues("spring.flyway-nc.url=test://localhost:1234/schema")
+
+    private val actuatorContextRunner =
+        contextRunner
+            .withConfiguration(
+                AutoConfigurations.of(
+                    FlywayNcEndpointAutoConfiguration::class.java,
+                    EndpointAutoConfiguration::class.java,
+                ),
+            ).withPropertyValues("management.endpoints.web.exposure.include=flywaync")
 
     @BeforeEach
     fun setUp() {
@@ -51,6 +80,8 @@ class FlywayNcAutoConfigurationTest {
         every { configuration.outOfOrder(any()) } returns configuration
         every { configuration.defaultSchema(any()) } returns configuration
         every { configuration.load() } returns flyway
+        every { flyway.configuration } returns configuration
+        every { configuration.pluginRegister } returns mockk<PluginRegister>(relaxed = true)
     }
 
     @AfterEach
@@ -228,6 +259,150 @@ class FlywayNcAutoConfigurationTest {
                 }
             }
     }
+
+    @Test
+    fun `NC actuator endpoint reports migration states without a DataSource`() {
+        val database = mockk<AbstractNativeConnectorsDatabase<*>>(relaxed = true)
+        every { configuration.pluginRegister.getInstancesOf(NativeConnectorsDatabase::class.java) } returns listOf(database)
+        val info = mockk<MigrationInfoService>()
+        val migrations =
+            listOf(MigrationState.SUCCESS, MigrationState.PENDING).mapIndexed { index, state ->
+                mockk<MigrationInfo>(relaxed = true) {
+                    every { type } returns CoreMigrationType.SQL
+                    every { version } returns MigrationVersion.fromVersion("${index + 1}")
+                    every { getState() } returns state
+                    every { installedOn } returns null
+                }
+            }
+        every { flyway.info() } returns info
+        every { info.all() } returns migrations.toTypedArray()
+
+        actuatorContextRunner.run { context ->
+            context.containsBean("dataSource") shouldBe false
+            val descriptor =
+                context
+                    .getBean<FlywayNcEndpoint>()
+                    .flywayBeans()
+                    .contexts
+                    .getValue(context.id)
+                    .flywayBeans
+                    .getValue("flyway")
+            descriptor.migrations.map { it.version } shouldBe listOf("1", "2")
+            descriptor.migrations.map { it.state } shouldBe listOf(MigrationState.SUCCESS, MigrationState.PENDING)
+            verify(exactly = 1) { database.close() }
+
+            val operation = webEndpoints(context).single { it.endpointId.toString() == "flywaync" }.operations.single()
+            operation.requestPredicate.path shouldBe "flywaync"
+            operation.requestPredicate.httpMethod shouldBe WebEndpointHttpMethod.GET
+        }
+    }
+
+    @Test
+    fun `actuator closes NC connections when info fails and preserves the original error`() {
+        val database = mockk<AbstractNativeConnectorsDatabase<*>>(relaxed = true)
+        every { configuration.pluginRegister.getInstancesOf(NativeConnectorsDatabase::class.java) } returns listOf(database)
+        val failure = FlywayException("info failed")
+        every { flyway.info() } throws failure
+        every { database.close() } throws IllegalStateException("close failed")
+
+        actuatorContextRunner.run { context ->
+            val thrown = shouldThrow<FlywayException> { context.getBean<FlywayNcEndpoint>().flywayBeans() }
+            thrown shouldBe failure
+            thrown.suppressed.single().message shouldBe "close failed"
+            verify(exactly = 1) { database.close() }
+        }
+    }
+
+    @Test
+    fun `endpoint works without Spring JDBC and Boot Flyway on the classpath`() {
+        actuatorContextRunner.withClassLoader(FilteredClassLoader("org.springframework.boot.flyway")).run { context ->
+            ClassUtils.isPresent("org.springframework.jdbc.core.JdbcTemplate", context.classLoader) shouldBe false
+            ClassUtils.isPresent("org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration", context.classLoader) shouldBe
+                false
+            ClassUtils.isPresent("org.springframework.boot.flyway.actuate.endpoint.FlywayEndpoint", context.classLoader) shouldBe false
+            context.getBean<FlywayNcEndpoint>().shouldBeInstanceOf<FlywayNcEndpoint>()
+            context.environment.getProperty("management.endpoint.flywaync.cache.time-to-live") shouldBe null
+        }
+    }
+
+    @Test
+    fun `NC actuator endpoint coexists with the Spring Boot Flyway endpoint`() {
+        actuatorContextRunner
+            .withConfiguration(AutoConfigurations.of(FlywayEndpointAutoConfiguration::class.java))
+            .withPropertyValues("management.endpoints.web.exposure.include=flyway,flywaync")
+            .run { context ->
+                context.getBean("flywayEndpoint").shouldBeInstanceOf<FlywayEndpoint>()
+                context.getBean("flywayNcEndpoint").shouldBeInstanceOf<FlywayNcEndpoint>()
+                webEndpoints(context).map { it.endpointId.toString() }.toSet() shouldBe setOf("flyway", "flywaync")
+            }
+    }
+
+    @Test
+    fun `actuator endpoint is absent when it is not exposed`() {
+        actuatorContextRunner
+            .withPropertyValues("management.endpoints.web.exposure.include=health")
+            .run { context ->
+                context.getBeansOfType(FlywayNcEndpoint::class.java).isEmpty() shouldBe true
+            }
+    }
+
+    @Test
+    fun `actuator endpoint respects disabled access`() {
+        actuatorContextRunner
+            .withConfiguration(AutoConfigurations.of(FlywayEndpointAutoConfiguration::class.java))
+            .withPropertyValues("management.endpoints.web.exposure.include=flyway,flywaync")
+            .withPropertyValues("management.endpoint.flywaync.access=NONE")
+            .run { context ->
+                context.getBeansOfType(FlywayNcEndpoint::class.java).isEmpty() shouldBe true
+                context.getBean("flywayEndpoint").shouldBeInstanceOf<FlywayEndpoint>()
+            }
+    }
+
+    @Test
+    fun `actuator endpoint backs off for a user-defined endpoint`() {
+        val endpoint = mockk<FlywayNcEndpoint>()
+        actuatorContextRunner
+            .withBean(FlywayNcEndpoint::class.java, { endpoint })
+            .run { context ->
+                context.getBeansOfType(FlywayNcEndpoint::class.java).values.toList() shouldBe listOf(endpoint)
+            }
+    }
+
+    @Test
+    fun `actuator endpoint is absent when NC Flyway is disabled`() {
+        actuatorContextRunner
+            .withPropertyValues("spring.flyway-nc.enabled=false")
+            .run { context ->
+                context.getBeansOfType(FlywayNcEndpoint::class.java).isEmpty() shouldBe true
+            }
+    }
+
+    @Test
+    fun `NC starter still works without actuator`() {
+        contextRunner
+            .withConfiguration(
+                AutoConfigurations.of(
+                    FlywayNcEndpointAutoConfiguration::class.java,
+                ),
+            ).withClassLoader(FilteredClassLoader("org.springframework.boot.actuate"))
+            .run { context ->
+                context.getBean<Flyway>() shouldBe flyway
+                context.getBeansOfType(FlywayNcMigrationInitializer::class.java).size shouldBe 1
+                context.containsBean("flywayNcEndpoint") shouldBe false
+            }
+    }
+
+    private fun webEndpoints(context: ApplicationContext) =
+        WebEndpointDiscoverer(
+            context,
+            ConversionServiceParameterValueMapper(),
+            EndpointMediaTypes.DEFAULT,
+            emptyList(),
+            emptyList(),
+            emptyList(),
+            emptyList(),
+            emptyList(),
+        ).endpoints
 
     @Configuration
     class NoOpMigrationStrategyConfig {

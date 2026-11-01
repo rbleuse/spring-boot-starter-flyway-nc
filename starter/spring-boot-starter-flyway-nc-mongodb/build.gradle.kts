@@ -18,6 +18,7 @@ dependencies {
     runtimeOnly(flywayVersion.map { "org.flywaydb:flyway-database-nc-mongodb:$it" })
 
     testImplementation(platform(libs.springBoot.dependencies))
+    testImplementation(libs.springBoot.starter.actuator)
     testImplementation(libs.springBoot.docker.compose)
     testImplementation(libs.springBoot.starter.test)
     testImplementation(libs.springBoot.testcontainers)

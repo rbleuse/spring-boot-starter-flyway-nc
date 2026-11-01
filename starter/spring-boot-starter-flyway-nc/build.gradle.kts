@@ -15,15 +15,19 @@ val flywayVersion = (rootProject.extra["flywayVersionProvider"] as Provider<*>).
 
 dependencies {
     compileOnly(flywayVersion.map { "org.flywaydb:flyway-core:$it" })
+    runtimeOnly(flywayVersion.map { "org.flywaydb:flyway-verb-info:$it" })
     runtimeOnly(flywayVersion.map { "org.flywaydb:flyway-verb-migrate:$it" })
     runtimeOnly(flywayVersion.map { "org.flywaydb:flyway-nc-scanners:$it" })
 
     compileOnly(libs.springBoot.autoconfigure)
+    compileOnly(libs.springBoot.actuator.autoconfigure)
 
     kapt(platform(libs.springBoot.dependencies))
     kapt(libs.springBoot.configuration.processor)
 
     testImplementation(platform(libs.springBoot.dependencies))
+    testImplementation(libs.springBoot.flyway) { isTransitive = false }
+    testImplementation(libs.springBoot.starter.actuator)
     testImplementation(libs.springBoot.starter.test)
     testImplementation(flywayVersion.map { "org.flywaydb:flyway-core:$it" })
 }

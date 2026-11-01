@@ -1,4 +1,4 @@
-﻿package io.github.rbleuse.flywaync
+package io.github.rbleuse.flywaync
 
 import com.datastax.oss.driver.api.core.CqlSession
 import com.datastax.oss.driver.internal.core.session.DefaultSession
@@ -12,12 +12,14 @@ import io.mockk.every
 import io.mockk.mockk
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.FlywayException
+import org.flywaydb.core.api.MigrationState
 import org.flywaydb.core.api.output.MigrateResult
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.CsvSource
 import org.junit.jupiter.params.provider.ValueSource
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringBootConfiguration
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
@@ -35,12 +37,30 @@ import java.util.concurrent.atomic.AtomicInteger
 @SpringBootTest(
     properties = [
         "spring.flyway-nc.default-schema=flyway_nc_it",
+        "management.endpoints.web.exposure.include=flywaync",
     ],
 )
 @SpringBootConfiguration
 @EnableAutoConfiguration
 @Testcontainers(disabledWithoutDocker = true)
 class FlywayNcCassandraIT {
+    @Autowired
+    private lateinit var flywayNcEndpoint: FlywayNcEndpoint
+
+    @Test
+    fun `actuator reports successful NC migrations`() {
+        val migrations =
+            flywayNcEndpoint
+                .flywayBeans()
+                .contexts.values
+                .flatMap { it.flywayBeans.values }
+                .flatMap { it.migrations }
+                .filter { it.version != null }
+
+        migrations.map { it.version } shouldBe listOf("1")
+        migrations.map { it.state } shouldBe listOf(MigrationState.SUCCESS)
+    }
+
     @AfterEach
     fun `all Cassandra sessions are closed`() {
         // Read the driver's leak counter: checking only the last session misses overwritten sessions.

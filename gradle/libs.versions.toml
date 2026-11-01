@@ -10,8 +10,11 @@ mockk = "1.14.11"
 [libraries]
 springBoot-dependencies = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "springBoot" }
 springBoot-autoconfigure = { module = "org.springframework.boot:spring-boot-autoconfigure", version.ref = "springBoot" }
+springBoot-actuator-autoconfigure = { module = "org.springframework.boot:spring-boot-actuator-autoconfigure", version.ref = "springBoot" }
 springBoot-configuration-processor = { module = "org.springframework.boot:spring-boot-configuration-processor", version.ref = "springBoot" }
 springBoot-docker-compose = { module = "org.springframework.boot:spring-boot-docker-compose", version.ref = "springBoot" }
+springBoot-flyway = { module = "org.springframework.boot:spring-boot-flyway", version.ref = "springBoot" }
+springBoot-starter-actuator = { module = "org.springframework.boot:spring-boot-starter-actuator" }
 springBoot-starter-test = { module = "org.springframework.boot:spring-boot-starter-test" }
 springBoot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }
 

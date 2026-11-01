@@ -13,6 +13,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
+import org.springframework.context.annotation.PropertySource
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 
@@ -21,6 +22,7 @@ import org.springframework.core.annotation.Order
 @Import(FlywayNcAutoConfiguration::class)
 @ConditionalOnBooleanProperty(name = ["spring.flyway-nc.enabled"], matchIfMissing = true)
 @EnableConfigurationProperties(FlywayNcProperties::class, CassandraFlywayNcLockProperties::class)
+@PropertySource("classpath:META-INF/flyway-nc-cassandra-defaults.properties")
 class CassandraFlywayNcAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(FlywayNcMigrationStrategy::class)

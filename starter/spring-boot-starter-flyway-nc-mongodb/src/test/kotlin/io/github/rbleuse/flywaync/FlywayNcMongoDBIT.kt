@@ -3,7 +3,9 @@ package io.github.rbleuse.flywaync
 import com.mongodb.client.MongoClients
 import io.kotest.matchers.collections.shouldContain
 import io.kotest.matchers.shouldBe
+import org.flywaydb.core.api.MigrationState
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.SpringBootConfiguration
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
 import org.springframework.boot.test.context.SpringBootTest
@@ -16,12 +18,30 @@ import org.testcontainers.utility.DockerImageName
     properties = [
         "spring.flyway-nc.default-schema=flyway_nc_it",
         "spring.flyway-nc.migration-suffixes[0]=.json",
+        "management.endpoints.web.exposure.include=flywaync",
     ],
 )
 @SpringBootConfiguration
 @EnableAutoConfiguration
 @Testcontainers(disabledWithoutDocker = true)
 class FlywayNcMongoDBIT {
+    @Autowired
+    private lateinit var flywayNcEndpoint: FlywayNcEndpoint
+
+    @Test
+    fun `actuator reports successful NC migrations`() {
+        val migrations =
+            flywayNcEndpoint
+                .flywayBeans()
+                .contexts.values
+                .flatMap { it.flywayBeans.values }
+                .flatMap { it.migrations }
+                .filter { it.version != null }
+
+        migrations.map { it.version } shouldBe listOf("1")
+        migrations.map { it.state } shouldBe listOf(MigrationState.SUCCESS)
+    }
+
     companion object {
         private const val DATABASE = "flyway_nc_it"
 

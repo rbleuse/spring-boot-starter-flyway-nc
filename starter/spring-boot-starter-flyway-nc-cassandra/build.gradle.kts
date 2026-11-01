@@ -23,6 +23,7 @@ dependencies {
     runtimeOnly(flywayVersion.map { "org.flywaydb:flyway-database-nc-cassandra:$it" })
 
     testImplementation(platform(libs.springBoot.dependencies))
+    testImplementation(libs.springBoot.starter.actuator)
     testImplementation(libs.springBoot.docker.compose)
     testImplementation(libs.springBoot.starter.test)
     testImplementation(libs.springBoot.testcontainers)

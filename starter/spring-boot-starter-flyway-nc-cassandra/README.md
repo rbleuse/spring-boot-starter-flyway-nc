@@ -33,6 +33,12 @@ spring:
 
 This starter defaults `spring.flyway-nc.migration-suffixes` to `[".cql"]` (Flyway's own default is `.sql`) and disables transactional execution because Cassandra migrations cannot be rolled back. This also lets Flyway record failed migrations in its schema-history table. A user `FlywayConfigurationCustomizer` can override either default.
 
+### Actuator
+
+With Actuator installed, `/actuator/flywaync` caches migration information for **one minute** by default to avoid repeatedly opening and closing Cassandra sessions. It remains available when Spring Boot's Flyway endpoint is also present. See the [Actuator setup](../../README.md#actuator) for endpoint exposure.
+
+Override `management.endpoint.flywaync.cache.time-to-live` in your application to change the duration, or set it to `0ms` to disable caching. The default can return migration information up to one minute old; it does not affect Spring Boot's `flyway` endpoint cache, Kubernetes liveness or readiness probes.
+
 ### Distributed migration lock
 
 The Cassandra-specific LWT lock is enabled by default. Its timings can be customized when several application instances may start concurrently:

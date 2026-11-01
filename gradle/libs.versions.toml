@@ -1,10 +1,10 @@
 [versions]
-springBoot = "4.2.0-M1"
-kotest = "6.2.4"
-kotlin = "2.4.10"
+springBoot = "4.2.0-RC1"
+kotest = "6.2.6"
+kotlin = "2.4.21"
 kotlinter = "5.5.0"
-kover = "0.9.9"
-jacoco = "0.8.15"
+kover = "0.9.11"
+jacoco = "0.8.16"
 mockk = "1.14.11"
 
 [libraries]

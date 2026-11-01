@@ -26,12 +26,12 @@ import org.testcontainers.utility.DockerImageName
 @Testcontainers(disabledWithoutDocker = true)
 class FlywayNcMongoDBIT {
     @Autowired
-    private lateinit var flywayNcEndpoint: FlywayNcEndpoint
+    private lateinit var flywayNcActuatorEndpoint: FlywayNcActuatorEndpoint
 
     @Test
     fun `actuator reports successful NC migrations`() {
         val migrations =
-            flywayNcEndpoint
+            flywayNcActuatorEndpoint
                 .flywayBeans()
                 .contexts.values
                 .flatMap { it.flywayBeans.values }

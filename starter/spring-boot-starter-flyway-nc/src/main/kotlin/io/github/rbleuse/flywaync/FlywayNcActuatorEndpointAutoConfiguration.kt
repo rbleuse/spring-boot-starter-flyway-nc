@@ -12,13 +12,13 @@ import org.springframework.context.annotation.Configuration
 
 @AutoConfiguration(after = [FlywayNcAutoConfiguration::class])
 @ConditionalOnClass(Flyway::class, ConditionalOnAvailableEndpoint::class)
-class FlywayNcEndpointAutoConfiguration {
+class FlywayNcActuatorEndpointAutoConfiguration {
     @Configuration(proxyBeanMethods = false)
-    @ConditionalOnAvailableEndpoint(FlywayNcEndpoint::class)
+    @ConditionalOnAvailableEndpoint(FlywayNcActuatorEndpoint::class)
     class EndpointConfiguration {
         @Bean
         @ConditionalOnBean(Flyway::class)
         @ConditionalOnMissingBean
-        fun flywayNcEndpoint(context: ApplicationContext): FlywayNcEndpoint = FlywayNcEndpoint(context)
+        fun flywayNcEndpoint(context: ApplicationContext): FlywayNcActuatorEndpoint = FlywayNcActuatorEndpoint(context)
     }
 }

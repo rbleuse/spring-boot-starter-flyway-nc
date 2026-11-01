@@ -4,7 +4,7 @@ import org.gradle.api.tasks.testing.TestReport
 plugins {
     base
     `test-report-aggregation`
-    id("com.gradleup.nmcp.aggregation") version "1.6.1"
+    id("com.gradleup.nmcp.aggregation") version "1.6.2"
     id("org.jetbrains.kotlinx.kover")
 }
 

@@ -45,12 +45,12 @@ import java.util.concurrent.atomic.AtomicInteger
 @Testcontainers(disabledWithoutDocker = true)
 class FlywayNcCassandraIT {
     @Autowired
-    private lateinit var flywayNcEndpoint: FlywayNcEndpoint
+    private lateinit var flywayNcActuatorEndpoint: FlywayNcActuatorEndpoint
 
     @Test
     fun `actuator reports successful NC migrations`() {
         val migrations =
-            flywayNcEndpoint
+            flywayNcActuatorEndpoint
                 .flywayBeans()
                 .contexts.values
                 .flatMap { it.flywayBeans.values }

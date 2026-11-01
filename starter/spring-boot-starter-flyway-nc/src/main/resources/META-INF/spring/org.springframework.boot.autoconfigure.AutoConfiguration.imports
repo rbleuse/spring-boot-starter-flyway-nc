@@ -1,2 +1,2 @@
 io.github.rbleuse.flywaync.FlywayNcAutoConfiguration
-io.github.rbleuse.flywaync.FlywayNcEndpointAutoConfiguration
+io.github.rbleuse.flywaync.FlywayNcActuatorEndpointAutoConfiguration

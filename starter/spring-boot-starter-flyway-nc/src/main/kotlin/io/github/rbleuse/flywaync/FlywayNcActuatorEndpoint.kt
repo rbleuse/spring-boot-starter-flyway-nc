@@ -2,6 +2,7 @@ package io.github.rbleuse.flywaync
 
 import org.flywaydb.core.Flyway
 import org.flywaydb.core.api.MigrationInfo
+import org.flywaydb.core.api.MigrationState
 import org.flywaydb.core.internal.nc.NativeConnectorsDatabase
 import org.springframework.boot.actuate.endpoint.OperationResponseBody
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint
@@ -9,9 +10,8 @@ import org.springframework.boot.actuate.endpoint.annotation.ReadOperation
 import org.springframework.context.ApplicationContext
 import java.time.Instant
 
-/** Exposes the standard Flyway Actuator response without Spring Boot's JDBC Flyway module. */
 @Endpoint(id = "flywaync")
-class FlywayNcEndpoint(
+class FlywayNcActuatorEndpoint(
     private val context: ApplicationContext,
 ) {
     @Synchronized
@@ -57,7 +57,7 @@ class FlywayNcEndpoint(
         val version: String? = info.version?.toString()
         val description: String? = info.description
         val script: String? = info.script
-        val state = info.state
+        val state: MigrationState? = info.state
         val installedBy: String? = info.installedBy
         val installedOn: Instant? = info.installedOn?.let { Instant.ofEpochMilli(it.time) }
         val installedRank: Int? = info.installedRank

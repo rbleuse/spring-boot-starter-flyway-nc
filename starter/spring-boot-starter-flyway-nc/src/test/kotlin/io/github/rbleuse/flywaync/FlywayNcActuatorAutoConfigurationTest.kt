@@ -40,7 +40,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.util.ClassUtils
 import java.util.concurrent.atomic.AtomicInteger
 
-class FlywayNcAutoConfigurationTest {
+class FlywayNcActuatorAutoConfigurationTest {
     private lateinit var configuration: FluentConfiguration
     private lateinit var flyway: Flyway
 
@@ -54,7 +54,7 @@ class FlywayNcAutoConfigurationTest {
         contextRunner
             .withConfiguration(
                 AutoConfigurations.of(
-                    FlywayNcEndpointAutoConfiguration::class.java,
+                    FlywayNcActuatorEndpointAutoConfiguration::class.java,
                     EndpointAutoConfiguration::class.java,
                 ),
             ).withPropertyValues("management.endpoints.web.exposure.include=flywaync")
@@ -281,7 +281,7 @@ class FlywayNcAutoConfigurationTest {
             context.containsBean("dataSource") shouldBe false
             val descriptor =
                 context
-                    .getBean<FlywayNcEndpoint>()
+                    .getBean<FlywayNcActuatorEndpoint>()
                     .flywayBeans()
                     .contexts
                     .getValue(context.id)
@@ -306,7 +306,7 @@ class FlywayNcAutoConfigurationTest {
         every { database.close() } throws IllegalStateException("close failed")
 
         actuatorContextRunner.run { context ->
-            val thrown = shouldThrow<FlywayException> { context.getBean<FlywayNcEndpoint>().flywayBeans() }
+            val thrown = shouldThrow<FlywayException> { context.getBean<FlywayNcActuatorEndpoint>().flywayBeans() }
             thrown shouldBe failure
             thrown.suppressed.single().message shouldBe "close failed"
             verify(exactly = 1) { database.close() }
@@ -320,7 +320,7 @@ class FlywayNcAutoConfigurationTest {
             ClassUtils.isPresent("org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration", context.classLoader) shouldBe
                 false
             ClassUtils.isPresent("org.springframework.boot.flyway.actuate.endpoint.FlywayEndpoint", context.classLoader) shouldBe false
-            context.getBean<FlywayNcEndpoint>().shouldBeInstanceOf<FlywayNcEndpoint>()
+            context.getBean<FlywayNcActuatorEndpoint>().shouldBeInstanceOf<FlywayNcActuatorEndpoint>()
             context.environment.getProperty("management.endpoint.flywaync.cache.time-to-live") shouldBe null
         }
     }
@@ -332,7 +332,7 @@ class FlywayNcAutoConfigurationTest {
             .withPropertyValues("management.endpoints.web.exposure.include=flyway,flywaync")
             .run { context ->
                 context.getBean("flywayEndpoint").shouldBeInstanceOf<FlywayEndpoint>()
-                context.getBean("flywayNcEndpoint").shouldBeInstanceOf<FlywayNcEndpoint>()
+                context.getBean("flywayNcEndpoint").shouldBeInstanceOf<FlywayNcActuatorEndpoint>()
                 webEndpoints(context).map { it.endpointId.toString() }.toSet() shouldBe setOf("flyway", "flywaync")
             }
     }
@@ -342,7 +342,7 @@ class FlywayNcAutoConfigurationTest {
         actuatorContextRunner
             .withPropertyValues("management.endpoints.web.exposure.include=health")
             .run { context ->
-                context.getBeansOfType(FlywayNcEndpoint::class.java).isEmpty() shouldBe true
+                context.getBeansOfType(FlywayNcActuatorEndpoint::class.java).isEmpty() shouldBe true
             }
     }
 
@@ -353,18 +353,18 @@ class FlywayNcAutoConfigurationTest {
             .withPropertyValues("management.endpoints.web.exposure.include=flyway,flywaync")
             .withPropertyValues("management.endpoint.flywaync.access=NONE")
             .run { context ->
-                context.getBeansOfType(FlywayNcEndpoint::class.java).isEmpty() shouldBe true
+                context.getBeansOfType(FlywayNcActuatorEndpoint::class.java).isEmpty() shouldBe true
                 context.getBean("flywayEndpoint").shouldBeInstanceOf<FlywayEndpoint>()
             }
     }
 
     @Test
     fun `actuator endpoint backs off for a user-defined endpoint`() {
-        val endpoint = mockk<FlywayNcEndpoint>()
+        val endpoint = mockk<FlywayNcActuatorEndpoint>()
         actuatorContextRunner
-            .withBean(FlywayNcEndpoint::class.java, { endpoint })
+            .withBean(FlywayNcActuatorEndpoint::class.java, { endpoint })
             .run { context ->
-                context.getBeansOfType(FlywayNcEndpoint::class.java).values.toList() shouldBe listOf(endpoint)
+                context.getBeansOfType(FlywayNcActuatorEndpoint::class.java).values.toList() shouldBe listOf(endpoint)
             }
     }
 
@@ -373,7 +373,7 @@ class FlywayNcAutoConfigurationTest {
         actuatorContextRunner
             .withPropertyValues("spring.flyway-nc.enabled=false")
             .run { context ->
-                context.getBeansOfType(FlywayNcEndpoint::class.java).isEmpty() shouldBe true
+                context.getBeansOfType(FlywayNcActuatorEndpoint::class.java).isEmpty() shouldBe true
             }
     }
 
@@ -382,7 +382,7 @@ class FlywayNcAutoConfigurationTest {
         contextRunner
             .withConfiguration(
                 AutoConfigurations.of(
-                    FlywayNcEndpointAutoConfiguration::class.java,
+                    FlywayNcActuatorEndpointAutoConfiguration::class.java,
                 ),
             ).withClassLoader(FilteredClassLoader("org.springframework.boot.actuate"))
             .run { context ->

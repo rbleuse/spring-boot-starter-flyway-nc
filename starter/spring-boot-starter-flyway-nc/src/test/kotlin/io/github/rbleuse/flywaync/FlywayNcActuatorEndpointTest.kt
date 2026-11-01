@@ -14,7 +14,7 @@ import tools.jackson.databind.json.JsonMapper
 import java.time.Instant
 import java.util.Date
 
-class FlywayNcEndpointTest {
+class FlywayNcActuatorEndpointTest {
     @Test
     fun `JSON matches Boot Flyway for parent contexts and nullable migration fields`() {
         GenericApplicationContext().use { parent ->
@@ -30,7 +30,7 @@ class FlywayNcEndpointTest {
                 child.refresh()
 
                 val mapper = JsonMapper.builder().build()
-                val actual = mapper.readTree(mapper.writeValueAsString(FlywayNcEndpoint(child).flywayBeans()))
+                val actual = mapper.readTree(mapper.writeValueAsString(FlywayNcActuatorEndpoint(child).flywayBeans()))
                 val expected =
                     mapper.readTree(
                         """

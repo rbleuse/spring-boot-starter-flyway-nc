@@ -1,7 +1,7 @@
 package io.github.rbleuse.flywaync.cassandra
 
 import io.github.rbleuse.flywaync.FlywayNcAutoConfiguration
-import io.github.rbleuse.flywaync.FlywayNcEndpointAutoConfiguration
+import io.github.rbleuse.flywaync.FlywayNcActuatorEndpointAutoConfiguration
 import io.github.rbleuse.flywaync.FlywayNcMigrationInitializer
 import io.github.rbleuse.flywaync.FlywayNcMigrationStrategy
 import io.kotest.matchers.shouldBe
@@ -52,7 +52,7 @@ class CassandraFlywayNcAutoConfigurationTest {
         every { flyway.info().all() } returns emptyArray()
         contextRunner
             .withConfiguration(
-                AutoConfigurations.of(FlywayNcEndpointAutoConfiguration::class.java, EndpointAutoConfiguration::class.java),
+                AutoConfigurations.of(FlywayNcActuatorEndpointAutoConfiguration::class.java, EndpointAutoConfiguration::class.java),
             ).withBean(Flyway::class.java, { flyway })
             .withPropertyValues("management.endpoints.web.exposure.include=flywaync")
             .run { context ->
@@ -69,7 +69,7 @@ class CassandraFlywayNcAutoConfigurationTest {
         every { flyway.info().all() } returns emptyArray()
         contextRunner
             .withConfiguration(
-                AutoConfigurations.of(FlywayNcEndpointAutoConfiguration::class.java, EndpointAutoConfiguration::class.java),
+                AutoConfigurations.of(FlywayNcActuatorEndpointAutoConfiguration::class.java, EndpointAutoConfiguration::class.java),
             ).withBean(Flyway::class.java, { flyway })
             .withPropertyValues(
                 "management.endpoints.web.exposure.include=flywaync",

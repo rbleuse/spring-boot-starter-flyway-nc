@@ -17,7 +17,7 @@ class MongoDBFlywayNcDockerComposeConnectionDetailsFactoryTest {
                 object : RunningService {
                     override fun name(): String = "mongo"
 
-                    override fun image(): ImageReference = ImageReference.of("mongo:8.0.21")
+                    override fun image(): ImageReference = ImageReference.of("mongo")
 
                     override fun host(): String = "127.0.0.1"
 
@@ -51,7 +51,7 @@ class MongoDBFlywayNcDockerComposeConnectionDetailsFactoryTest {
                 object : RunningService {
                     override fun name(): String = "mongo"
 
-                    override fun image(): ImageReference = ImageReference.of("mongo:8.0.21")
+                    override fun image(): ImageReference = ImageReference.of("mongo")
 
                     override fun host(): String = "127.0.0.1"
 

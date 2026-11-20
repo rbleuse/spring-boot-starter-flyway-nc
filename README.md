@@ -31,7 +31,7 @@ This build publishes six artifacts:
 
 ```kotlin
 plugins {
-    id("org.springframework.boot") version "4.2.0-M1" // applies io.spring.dependency-management
+    id("org.springframework.boot") version "4.2.0" // applies io.spring.dependency-management
 }
 
 extra["flyway.version"] = "13.0.0" // optional override; defaults to the BOM's pinned version

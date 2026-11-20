@@ -48,7 +48,7 @@ class FlywayNcMongoDBIT {
         @ServiceConnection
         val mongo: MongoDBContainer =
             MongoDBContainer(
-                DockerImageName.parse("mongo:8.0.29"),
+                DockerImageName.parse("mongo:8.0.38"),
             )
     }
 

@@ -19,7 +19,7 @@ class CassandraFlywayNcDockerComposeConnectionDetailsFactoryTest {
                 object : RunningService {
                     override fun name(): String = "cassandra"
 
-                    override fun image(): ImageReference = ImageReference.of("cassandra:5.0")
+                    override fun image(): ImageReference = ImageReference.of("cassandra")
 
                     override fun host(): String = "127.0.0.1"
 

@@ -18,7 +18,7 @@ dependencies {
 
 See the [root README](../../README.md#installation) for the recommended setup with the Spring Boot Gradle plugin and the `spring-boot-flyway-nc-dependencies` BOM, plus the mandatory `FLYWAY_NATIVE_CONNECTORS=true` environment variable.
 
-**Minimum Flyway version for starter 2.0:** 12.11.0 — the Flyway version managed by Spring Boot 4.2.0-M1.
+**Minimum Flyway version for starter 2.0:** 12.11.0 — the Flyway version managed by Spring Boot 4.2.0.
 
 ## Configuration
 
@@ -71,7 +71,7 @@ When `org.springframework.boot:spring-boot-docker-compose` is on the classpath a
 ```yaml
 services:
   mongo:
-    image: mongo:8.0.21
+    image: mongo:8.0.38
     ports:
       - "27017"
     environment:
@@ -92,7 +92,7 @@ When `org.springframework.boot:spring-boot-testcontainers` is on the test classp
 
 ```kotlin
 @ServiceConnection
-val mongo = MongoDBContainer(DockerImageName.parse("mongo:8.0.21"))
+val mongo = MongoDBContainer(DockerImageName.parse("mongo:8.0.38"))
 ```
 
 The factory derives the URL from the container's `connectionString`. The default `mongo` image runs without authentication, so no credentials are exposed. The factory does not embed a database name, so set `spring.flyway-nc.default-schema` when migrations need a specific database.
